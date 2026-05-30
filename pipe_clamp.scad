@@ -89,7 +89,9 @@ module flange() {
 }
 
 // ── Assembly ────────────────────────────────────────────────────────────────
-union() {
+// Render the model, unless another file (e.g. dimensions.scad) includes this
+// one only for its parameters and modules — it sets DIMENSIONS_ONLY first.
+if (is_undef(DIMENSIONS_ONLY)) union() {
     clamp_body();
     flange();
 }
