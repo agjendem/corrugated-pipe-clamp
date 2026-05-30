@@ -2,30 +2,32 @@
 //  Parametric clamp for corrugated conduit (electrical draw-in pipe)
 // ----------------------------------------------------------------------------
 //  A clamp that wraps partially (coverage_deg) around a corrugated conduit.
-//  Internal circumferential ridges seat into the conduit's grooves and lock
+//  Internal circumferential teeth bite into the conduit's grooves and lock
 //  the pipe axially. A flange at one end is wider than the pipe so the
 //  clamp + pipe cannot be pulled through a hole in a wall.
 //
-//  Sizing logic (example: 16 mm conduit -> 18 mm bore):
-//    bore_diameter = bore over the conduit's corrugation CRESTS (here 18 mm).
-//    The clamp's own grip ridges protrude inward by corr_depth and seat in
-//    the conduit's grooves. The pipe's nominal/grip diameter therefore is
-//    approximately  bore_diameter - 2*corr_depth = 16 mm.
-//    Wall is added outside the bore. The flange extends flange_overhang mm
-//    beyond the pipe width (Ø18).
+//  Sizing logic (example: 16 mm conduit, 18 mm wall hole):
+//    pipe_diameter = the conduit's outer (crest) diameter (here 16 mm).
+//    bore_diameter = the hole the clamp must pass through, i.e. the clamp
+//                    body's OUTER diameter (here 18 mm).
+//    The available material is therefore (bore_diameter - pipe_diameter)/2
+//    (here 1 mm radial) -- this is the smooth backing wall over the crests.
+//    The grip teeth bite an additional corr_depth into the conduit grooves.
+//    The flange extends flange_overhang mm beyond the pipe and catches on
+//    the wall hole.
 //
 //  All dimensions are in millimetres.
 // ============================================================================
 
 /* [Pipe / bore] */
-bore_diameter  = 18;   // inner bore over the conduit's corrugation crests (mm)
-corr_depth     = 1;    // radial depth of the corrugation (mm)
-corr_width     = 1.5;  // width of each ridge along the pipe axis (mm)
-groove_width   = 1.5;  // width of each groove/recess along the pipe axis (mm)
+pipe_diameter  = 16;   // outer (crest) diameter of the corrugated conduit (mm)
+bore_diameter  = 18;   // hole the clamp passes through = clamp body outer Ø (mm)
+corr_depth     = 1;    // how far grip teeth bite into the conduit grooves (mm)
+corr_width     = 1.5;  // width of each grip tooth along the pipe axis (mm)
+groove_width   = 1.5;  // width of each recess (over a crest) along the axis (mm)
 corr_count     = 6;    // number of corrugation periods -> sets the length
 
-/* [Clamp wall] */
-wall_thickness = 2;    // solid material outside the bore, radial (mm)
+/* [Clamp] */
 coverage_deg   = 200;  // degrees of the pipe circumference covered
 
 /* [Flange (end stop against a wall)] */
@@ -36,20 +38,32 @@ flange_thickness = 1;  // flange thickness along the pipe axis (mm)
 $fn = 180;
 
 // ── Derived dimensions ──────────────────────────────────────────────────────
-r_recess = bore_diameter / 2;            // bore over crests
-r_grip   = r_recess - corr_depth;        // grip ridge seated in groove
-r_outer  = r_recess + wall_thickness;    // outer wall (smooth)
+material = (bore_diameter - pipe_diameter) / 2;  // backing wall over crests (mm)
+
+r_outer  = bore_diameter / 2;            // smooth outer wall of the clamp body
+r_recess = pipe_diameter / 2;            // inner radius over a pipe crest (clearance)
+r_grip   = r_recess - corr_depth;        // grip tooth seated in a pipe groove
 period   = corr_width + groove_width;    // one corrugation period along the axis
 length   = corr_count * period;          // total length along the pipe
 r_flange = r_recess + flange_overhang;   // flange outer radius (beyond the pipe)
 
+assert(bore_diameter > pipe_diameter,
+       "bore_diameter must be larger than pipe_diameter");
+assert(r_grip > 0, "corr_depth too large for this pipe_diameter");
+
+echo(str("Available material (radial): ", material, " mm"));
+echo(str("Clamp body outer Ø: ", bore_diameter, " mm"));
+echo(str("Flange Ø: ", 2 * r_flange, " mm"));
+echo(str("Length: ", length, " mm"));
+
 // ── Clamp body: square-wave inner edge, smooth outer edge ───────────────────
 //  Cross-section in the (radius, axial-z) plane, revolved around Z.
+//  Teeth (r_grip) sit in the conduit grooves; recesses (r_recess) clear crests.
 inner_pts = [ for (i = [0 : corr_count - 1]) each [
-    [r_recess, i * period],                  // groove start
-    [r_recess, i * period + groove_width],   // groove end
-    [r_grip,   i * period + groove_width],   // step in to grip ridge
-    [r_grip,   (i + 1) * period]             // ridge end / next start
+    [r_recess, i * period],                  // recess start (over a crest)
+    [r_recess, i * period + groove_width],   // recess end
+    [r_grip,   i * period + groove_width],   // step in to grip tooth
+    [r_grip,   (i + 1) * period]             // tooth end / next start
 ]];
 
 // Close the profile along the outer wall (top -> bottom). polygon() closes
@@ -63,7 +77,7 @@ module clamp_body() {
 
 // ── Flange: sector ring at the end (z = 0 .. flange_thickness) ──────────────
 //  Bore = r_recess so the pipe passes through and the flange fuses with the
-//  clamp wall (overlapping radii r_recess..r_outer).
+//  clamp body (overlapping radii r_recess..r_outer).
 module flange() {
     rotate_extrude(angle = coverage_deg)
         polygon(points = [
