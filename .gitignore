@@ -1,0 +1,14 @@
+# Build / export artifacts
+*.stl
+*.3mf
+*.amf
+*.off
+*.dxf
+*.csg
+
+# OpenSCAD editor / cache
+.openscad/
+*.bak
+
+# macOS
+.DS_Store
