@@ -17,6 +17,17 @@
 //    the wall hole.
 //
 //  All dimensions are in millimetres.
+//
+//  Conduit standard (IEC/EN 61386):
+//    Electrical conduit is standardised by IEC 61386 ("Conduit systems for
+//    cable management"); flexible/corrugated conduit by part -22. The NOMINAL
+//    size = the outer (crest) diameter -> set pipe_diameter to one of:
+//        16, 20, 25, 32, 40, 50, 63 mm   (16/20/25 are the common domestic sizes)
+//    The standard does NOT fix the corrugation depth or pitch -- these vary by
+//    maker. Measure your actual pipe and set the corrugation params:
+//        pipe_diameter        = crest (outer) Ø
+//        corr_depth           = (crest Ø - valley Ø) / 2
+//        corr_width+groove_width (pitch) = (length of N corrugations) / N
 // ============================================================================
 
 /* [Pipe / bore] */

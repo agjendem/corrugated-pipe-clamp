@@ -75,6 +75,30 @@ You give the two diameters and the rest is **derived**:
 `bore_diameter` must be larger than `pipe_diameter` (asserted in the model). A coverage
 above 180° gives a snap-fit grip onto the pipe.
 
+## Conduit standard (IEC/EN 61386)
+
+Electrical conduit is standardised by **IEC 61386** *"Conduit systems for cable
+management"* (EN 61386 in Europe, NEK EN 61386 in Norway). Flexible/corrugated conduit is
+covered by **part -22**. The **nominal size equals the outer (crest) diameter**, so set
+`pipe_diameter` to a standard size:
+
+| Nominal Ø (mm) | 16 | 20 | 25 | 32 | 40 | 50 | 63 |
+|---|---|---|---|---|---|---|---|
+
+16/20/25 mm are the common domestic sizes; the default model uses **16 mm**.
+
+> ⚠️ **The standard fixes the nominal diameter, but *not* the corrugation depth or
+> pitch** — these vary between makers and pipe types. Don't assume the defaults
+> (`corr_depth = 1`, pitch `1.5 + 1.5`) match your pipe.
+
+### How to measure your conduit
+
+Use a caliper and set the parameters accordingly:
+
+- `pipe_diameter` = the **crest** (outer) diameter.
+- `corr_depth` = (crest Ø − valley Ø) / 2.
+- pitch (`corr_width + groove_width`) = measure across **N** corrugations, divide by **N**.
+
 ## Usage
 
 Open `pipe_clamp.scad` in the OpenSCAD GUI to tweak parameters live (they appear in the
