@@ -37,7 +37,7 @@ corr_depth     = 1.4;   // how far grip teeth bite into the conduit grooves (mm)
 corr_width     = 1.2;   // width of each grip tooth along the pipe axis (mm)
 groove_width   = 2.59;  // width of each recess (over a crest) along the axis (mm)
 corr_count     = 6;     // number of corrugation periods -> sets the length
-corr_chamfer   = 0.3;   // bevel on the tooth/recess edges (mm); real conduit is
+corr_chamfer   = 0.1;   // bevel on the tooth/recess edges (mm); real conduit is
                         // U-shaped, not square. 0 = sharp square teeth.
 // Defaults measured off a real "16 mm" conduit: crest Ø 15.8, valley Ø 13.0
 // (-> corr_depth 1.4), 6 corrugations spanned 22.74 mm (pitch 3.79 = 1.2 + 2.59).
