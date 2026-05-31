@@ -37,6 +37,8 @@ corr_depth     = 1;    // how far grip teeth bite into the conduit grooves (mm)
 corr_width     = 1.5;  // width of each grip tooth along the pipe axis (mm)
 groove_width   = 1.5;  // width of each recess (over a crest) along the axis (mm)
 corr_count     = 6;    // number of corrugation periods -> sets the length
+corr_chamfer   = 0.3;  // bevel on the tooth/recess edges (mm); real conduit is
+                       // U-shaped, not square. 0 = sharp square teeth.
 
 /* [Clamp] */
 coverage_deg   = 200;  // degrees of the pipe circumference covered
@@ -61,21 +63,30 @@ r_flange = r_recess + flange_overhang;   // flange outer radius (beyond the pipe
 assert(bore_diameter > pipe_diameter,
        "bore_diameter must be larger than pipe_diameter");
 assert(r_grip > 0, "corr_depth too large for this pipe_diameter");
+assert(corr_chamfer <= min(corr_width, groove_width) / 2,
+       "corr_chamfer must be <= min(corr_width, groove_width)/2");
 
 echo(str("Available material (radial): ", material, " mm"));
 echo(str("Clamp body outer Ø: ", bore_diameter, " mm"));
 echo(str("Flange Ø: ", 2 * r_flange, " mm"));
 echo(str("Length: ", length, " mm"));
 
-// ── Clamp body: square-wave inner edge, smooth outer edge ───────────────────
+// ── Clamp body: chamfered-wave inner edge, smooth outer edge ────────────────
 //  Cross-section in the (radius, axial-z) plane, revolved around Z.
 //  Teeth (r_grip) sit in the conduit grooves; recesses (r_recess) clear crests.
-inner_pts = [ for (i = [0 : corr_count - 1]) each [
-    [r_recess, i * period],                  // recess start (over a crest)
-    [r_recess, i * period + groove_width],   // recess end
-    [r_grip,   i * period + groove_width],   // step in to grip tooth
-    [r_grip,   (i + 1) * period]             // tooth end / next start
-]];
+//  corr_chamfer shortens each flat by `c` at both ends, so the radial steps
+//  become sloped (trapezoidal) walls -> rounded/U-ish teeth instead of square.
+c = corr_chamfer;
+inner_pts = concat(
+    [ [r_recess, 0] ],                                // flat at the flange end
+    [ for (i = [0 : corr_count - 1]) each [
+        [r_recess, i * period + c],                  // recess plateau start
+        [r_recess, i * period + groove_width - c],   // recess plateau end
+        [r_grip,   i * period + groove_width + c],   // tooth plateau start
+        [r_grip,   (i + 1) * period - c]             // tooth plateau end
+    ]],
+    [ [r_recess, length] ]                           // flat at the far end
+);
 
 // Close the profile along the outer wall (top -> bottom). polygon() closes
 // automatically from [r_outer, 0] back to the first point [r_recess, 0].
