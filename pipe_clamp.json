@@ -1,0 +1,25 @@
+{
+  "fileFormatVersion": "1",
+  "parameterSets": {
+    "conduit_16mm": {
+      "pipe_diameter": "16",
+      "bore_diameter": "18"
+    },
+    "conduit_20mm": {
+      "pipe_diameter": "20",
+      "bore_diameter": "22"
+    },
+    "conduit_25mm": {
+      "pipe_diameter": "25",
+      "bore_diameter": "27"
+    },
+    "conduit_32mm": {
+      "pipe_diameter": "32",
+      "bore_diameter": "34"
+    },
+    "conduit_40mm": {
+      "pipe_diameter": "40",
+      "bore_diameter": "42"
+    }
+  }
+}
