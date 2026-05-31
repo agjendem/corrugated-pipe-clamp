@@ -31,16 +31,16 @@
 // ============================================================================
 
 /* [Pipe / bore] */
-pipe_diameter  = 16;   // outer (crest) diameter of the corrugated conduit (mm)
+pipe_diameter  = 15.8; // outer (crest) diameter of the corrugated conduit (mm)
 bore_diameter  = 18;   // hole the clamp passes through = clamp body outer Ø (mm)
-corr_depth     = 1;     // how far grip teeth bite into the conduit grooves (mm)
+corr_depth     = 1.4;   // how far grip teeth bite into the conduit grooves (mm)
 corr_width     = 1.2;   // width of each grip tooth along the pipe axis (mm)
 groove_width   = 2.59;  // width of each recess (over a crest) along the axis (mm)
 corr_count     = 6;     // number of corrugation periods -> sets the length
 corr_chamfer   = 0.3;   // bevel on the tooth/recess edges (mm); real conduit is
                         // U-shaped, not square. 0 = sharp square teeth.
-// Defaults measured off a real 16 mm conduit: 6 corrugations spanned 22.74 mm
-// (pitch 3.79 = 1.2 + 2.59), valley flat 1.2 mm, crest flat 2.5 mm.
+// Defaults measured off a real "16 mm" conduit: crest Ø 15.8, valley Ø 13.0
+// (-> corr_depth 1.4), 6 corrugations spanned 22.74 mm (pitch 3.79 = 1.2 + 2.59).
 
 /* [Clamp] */
 coverage_deg   = 200;  // degrees of the pipe circumference covered
