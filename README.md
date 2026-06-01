@@ -141,6 +141,8 @@ Customizer's preset dropdown in the GUI):
 | `conduit_40mm` | 40 | 42 | |
 | `conduit_40mm_fittest` | 40 | 43 | 25° fit-test sliver, measured 40 mm pipe (3 mm deep teeth, no flange) |
 | `conduit_40mm_mount` | 40 | 70 | 180° wall mount, measured 40 mm pipe; Ø70 bore, Ø94 flange (12 mm proud of the hole each side), rounded grooves |
+| `conduit_40mm_mount_210` | 40 | 70 | As `_mount` but 210° coverage — snaps onto the pipe; pairs with `_150` to wrap a full 360° |
+| `conduit_40mm_mount_150` | 40 | 70 | As `_mount` but 150° coverage — the 360°−210° complement of `_210` |
 
 The plain `conduit_*` presets only set the two diameters (bore = pipe + 2 mm) and inherit
 the default corrugation/flange values — **adjust `corr_depth` and pitch to your actual
