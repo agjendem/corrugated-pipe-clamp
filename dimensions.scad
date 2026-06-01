@@ -18,7 +18,7 @@ tick = 0.6;   // arrow/tick size (mm)
 
 // ── Half cross-section (right of the axis), in (x = radius, y = axial z) ─────
 color("SteelBlue") {
-    polygon(profile);                                    // clamp body wall
+    section_2d();                                        // clamp body wall (rounded)
     polygon([[r_recess, 0], [r_flange, 0],               // flange
              [r_flange, flange_thickness], [r_recess, flange_thickness]]);
 }
@@ -60,7 +60,7 @@ labels = [
     str("corr_depth     = ", corr_depth, " mm"),
     str("corr_width     = ", corr_width, " mm"),
     str("groove_width   = ", groove_width, " mm"),
-    str("corr_chamfer   = ", corr_chamfer, " mm"),
+    str("corr_round     = ", corr_round, " mm"),
     str("flange_thick.  = ", flange_thickness, " mm"),
     str("coverage_deg   = ", coverage_deg),
     str("corr_count     = ", corr_count, "  ->  length ", length, " mm"),

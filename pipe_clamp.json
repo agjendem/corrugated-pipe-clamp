@@ -20,6 +20,18 @@
     "conduit_40mm": {
       "pipe_diameter": "40",
       "bore_diameter": "42"
+    },
+    "conduit_40mm_fittest": {
+      "pipe_diameter": "40",
+      "bore_diameter": "43",
+      "corr_depth": "3",
+      "corr_width": "1.333",
+      "groove_width": "4",
+      "corr_count": "6",
+      "corr_round": "0.1",
+      "coverage_deg": "25",
+      "flange_overhang": "0",
+      "flange_thickness": "2"
     }
   }
 }
