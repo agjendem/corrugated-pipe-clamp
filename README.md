@@ -140,7 +140,7 @@ Customizer's preset dropdown in the GUI):
 | `conduit_32mm` | 32 | 34 | |
 | `conduit_40mm` | 40 | 42 | |
 | `conduit_40mm_fittest` | 40 | 43 | 25° fit-test sliver, measured 40 mm pipe (3 mm deep teeth, no flange) |
-| `conduit_40mm_mount` | 40 | 70 | 180° wall mount, measured 40 mm pipe; Ø70 bore, Ø94 flange (12 mm proud of the hole each side), rounded grooves |
+| `conduit_40mm_mount` | 40 | 70 | 180° wall mount, measured 40 mm pipe; Ø70 bore, Ø94 flange (12 mm proud of the hole each side), 10 teeth, rounded grooves |
 | `conduit_40mm_mount_210` | 40 | 70 | As `_mount` but 210° coverage — snaps onto the pipe; pairs with `_150` to wrap a full 360° |
 | `conduit_40mm_mount_150` | 40 | 70 | As `_mount` but 150° coverage — the 360°−210° complement of `_210` |
 | `conduit_40mm_mount_200` | 40 | 70 | As `_mount` but 200° coverage — snap-fit single-piece clamp |
@@ -153,8 +153,9 @@ preset shows the fuller pattern: a measured 40 mm conduit (crest 40, valley 34, 
 fit cheaply before committing to a full clamp.
 
 The `_mount` presets are a thick-walled wall fitting: Ø70 bore (15 mm of solid wall over
-the pipe) and a Ø94 flange that catches on the wall hole. The cross-section is the same for
-all three coverages — only the arc differs — so one dimensioned drawing covers them all:
+the pipe), a Ø94 flange that catches on the wall hole, and 10 teeth (≈53 mm long). The
+cross-section is the same for all coverages — only the arc differs — so one dimensioned
+drawing covers them all:
 
 ![40 mm mount dimensioned drawing](images/conduit_40mm_mount_dimensions.png)
 

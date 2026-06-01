@@ -35,7 +35,7 @@ dims pipe_clamp_dimensions
 # does not change the cross-section). Values mirror conduit_40mm_mount.
 dims conduit_40mm_mount_dimensions \
     -D pipe_diameter=40 -D bore_diameter=70 -D corr_depth=3 -D corr_width=1.333 \
-    -D groove_width=4 -D corr_count=6 -D corr_round=0.3 -D groove_fillet=0.6 \
+    -D groove_width=4 -D corr_count=10 -D corr_round=0.3 -D groove_fillet=0.6 \
     -D flange_overhang=27 -D flange_thickness=3
 
 echo "Rendered images/*.png"
