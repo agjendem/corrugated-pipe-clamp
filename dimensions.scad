@@ -11,10 +11,13 @@ include <pipe_clamp.scad>;
 
 $fn = 64;
 
-ts   = 1.1;   // text size (mm)
-lh   = 1.8;   // legend line height (mm)
-lw   = 0.08;  // dimension line width (mm)
-tick = 0.6;   // arrow/tick size (mm)
+// Scale the annotation off the part size so the drawing reads at any diameter.
+// Reference is the original ~22 mm-tall 16 mm part; larger parts scale up.
+s    = max(1, length / 22);
+ts   = 1.1  * s;   // text size (mm)
+lh   = 1.8  * s;   // legend line height (mm)
+lw   = 0.08 * s;   // dimension line width (mm)
+tick = 0.6  * s;   // arrow/tick size (mm)
 
 // ── Half cross-section (right of the axis), in (x = radius, y = axial z) ─────
 color("SteelBlue") {
@@ -31,25 +34,25 @@ module hdim(x0, x1, y, label) {           // horizontal dimension
     color("Black") {
         translate([min(x0, x1), y - lw/2]) square([abs(x1 - x0), lw]);
         for (x = [x0, x1]) translate([x, y]) rotate(45) square(tick, center = true);
-        translate([(x0 + x1) / 2, y + 0.4]) text(label, size = ts, halign = "center");
+        translate([(x0 + x1) / 2, y + 0.4 * s]) text(label, size = ts, halign = "center");
     }
 }
 module vdim(y0, y1, x, label) {           // vertical dimension
     color("Black") {
         translate([x - lw/2, min(y0, y1)]) square([lw, abs(y1 - y0)]);
         for (y = [y0, y1]) translate([x, y]) rotate(45) square(tick, center = true);
-        translate([x + 0.5, (y0 + y1) / 2]) text(label, size = ts, valign = "center");
+        translate([x + 0.5 * s, (y0 + y1) / 2]) text(label, size = ts, valign = "center");
     }
 }
 
 // Diameters (drawn from the axis to the relevant radius, doubled in the label)
-hdim(-r_outer,  r_outer,  length + 2.5, str("bore Ø ", bore_diameter));
-hdim(-r_recess, r_recess, length + 0.8, str("pipe Ø ", pipe_diameter));
-hdim(-r_flange, r_flange, -2,           str("flange Ø ", 2 * r_flange));
+hdim(-r_outer,  r_outer,  length + 2.5 * s, str("bore Ø ", bore_diameter));
+hdim(-r_recess, r_recess, length + 0.8 * s, str("pipe Ø ", pipe_diameter));
+hdim(-r_flange, r_flange, -2 * s,           str("flange Ø ", 2 * r_flange));
 
 // Wall / corrugation detail on the right wall
-vdim(0, length, r_flange + 0.5, str("length ", length));
-vdim(0, flange_thickness, r_flange + 0.5, str(" t ", flange_thickness));
+vdim(0, length, r_flange + 0.5 * s, str("length ", length));
+vdim(0, flange_thickness, r_flange + 0.5 * s, str(" t ", flange_thickness));
 
 // ── Legend (auto-generated from the parameters) ─────────────────────────────
 labels = [
@@ -68,5 +71,5 @@ labels = [
 ];
 color("Black")
     for (i = [0 : len(labels) - 1])
-        translate([r_flange + 9, length - i * lh])
+        translate([r_flange + 9 * s, length - i * lh])
             text(labels[i], size = ts, font = "Liberation Mono:style=Regular");

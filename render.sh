@@ -19,9 +19,23 @@ view pipe_clamp_top    0,0,9,0,0,25,70      # straight down the bore
 view pipe_clamp_back   0,0,9,60,0,205,95    # opposite side (solid wrap)
 view pipe_clamp_flange 0,0,6,118,0,25,95    # flange end from below
 
-# Dimensioned drawing: flat 2D, orthographic top view, auto-framed.
-"$OPENSCAD" -o images/pipe_clamp_dimensions.png --imgsize=1400,1000 \
-    --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
-    --colorscheme=Tomorrow dimensions.scad
+# Dimensioned drawing: flat 2D, orthographic top view, auto-framed. The
+# annotation scales with the part, so big parts stay readable.
+dims() {  # out_name  [extra -D overrides...]
+    out="$1"; shift
+    "$OPENSCAD" -o "images/$out.png" --imgsize=1400,1000 \
+        --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
+        --colorscheme=Tomorrow "$@" dimensions.scad
+}
+
+# Default 16 mm part.
+dims pipe_clamp_dimensions
+
+# 40 mm wall-mount geometry (shared by the 150/180/210° mount presets — coverage
+# does not change the cross-section). Values mirror conduit_40mm_mount.
+dims conduit_40mm_mount_dimensions \
+    -D pipe_diameter=40 -D bore_diameter=70 -D corr_depth=3 -D corr_width=1.333 \
+    -D groove_width=4 -D corr_count=6 -D corr_round=0.3 -D groove_fillet=0.6 \
+    -D flange_overhang=27 -D flange_thickness=3
 
 echo "Rendered images/*.png"

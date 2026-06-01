@@ -151,6 +151,14 @@ preset shows the fuller pattern: a measured 40 mm conduit (crest 40, valley 34, 
 5.33 = 4 mm crest + 1.33 mm valley) rendered as a narrow 25° arc to print-test the tooth
 fit cheaply before committing to a full clamp.
 
+The `_mount` presets are a thick-walled wall fitting: Ø70 bore (15 mm of solid wall over
+the pipe) and a Ø94 flange that catches on the wall hole. The cross-section is the same for
+all three coverages — only the arc differs — so one dimensioned drawing covers them all:
+
+![40 mm mount dimensioned drawing](images/conduit_40mm_mount_dimensions.png)
+
+> The `_210`/`_150` pair wraps the pipe in two complementary parts (210° + 150° = 360°).
+
 Render one preset from the command line:
 
 ```sh
