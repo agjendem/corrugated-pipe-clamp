@@ -71,6 +71,19 @@
       "coverage_deg": "150",
       "flange_overhang": "27",
       "flange_thickness": "3"
+    },
+    "conduit_40mm_mount_200": {
+      "pipe_diameter": "40",
+      "bore_diameter": "70",
+      "corr_depth": "3",
+      "corr_width": "1.333",
+      "groove_width": "4",
+      "corr_count": "6",
+      "corr_round": "0.3",
+      "groove_fillet": "0.6",
+      "coverage_deg": "200",
+      "flange_overhang": "27",
+      "flange_thickness": "3"
     }
   }
 }
