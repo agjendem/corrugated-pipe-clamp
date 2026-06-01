@@ -61,6 +61,7 @@ labels = [
     str("corr_width     = ", corr_width, " mm"),
     str("groove_width   = ", groove_width, " mm"),
     str("corr_round     = ", corr_round, " mm"),
+    str("groove_fillet  = ", groove_fillet, " mm"),
     str("flange_thick.  = ", flange_thickness, " mm"),
     str("coverage_deg   = ", coverage_deg),
     str("corr_count     = ", corr_count, "  ->  length ", length, " mm"),

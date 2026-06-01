@@ -37,8 +37,10 @@ corr_depth     = 1.4;   // how far grip teeth bite into the conduit grooves (mm)
 corr_width     = 1.2;   // width of each grip tooth along the pipe axis (mm)
 groove_width   = 2.59;  // width of each recess (over a crest) along the axis (mm)
 corr_count     = 6;     // number of corrugation periods -> sets the length
-corr_round     = 0.3;   // fillet radius rounding the tooth/recess edges (mm);
-                        // real conduit is U-shaped, not square. 0 = sharp corners.
+corr_round     = 0.3;   // fillet radius on the convex tooth TIPS (mm);
+                        // real conduit is U-shaped, not square. 0 = sharp tips.
+groove_fillet  = 0.6;   // fillet radius in the concave GROOVE bottoms (mm); eases
+                        // the printed tooth-underside overhang. 0 = sharp corners.
 // Defaults measured off a real "16 mm" conduit: crest Ø 15.8, valley Ø 13.0
 // (-> corr_depth 1.4), 6 corrugations spanned 22.74 mm (pitch 3.79 = 1.2 + 2.59).
 
@@ -69,19 +71,25 @@ assert(corr_round <= min(corr_width, groove_width) / 2,
        "corr_round must be <= min(corr_width, groove_width)/2");
 assert(corr_round <= corr_depth,
        "corr_round must be <= corr_depth");
+assert(groove_fillet <= corr_depth,
+       "groove_fillet must be <= corr_depth");
+assert(groove_fillet <= groove_width / 2,
+       "groove_fillet must be <= groove_width/2");
 
 echo(str("Available material (radial): ", material, " mm"));
 echo(str("Clamp body outer Ø: ", bore_diameter, " mm"));
 echo(str("Flange Ø: ", 2 * r_flange, " mm"));
 echo(str("Length: ", length, " mm"));
 
-// ── Clamp body: square-wave inner edge rounded by a fillet ──────────────────
+// ── Clamp body: square-wave inner edge with two independent fillets ─────────
 //  Cross-section in the (radius, axial-z) plane, revolved around Z.
 //  Teeth (r_grip) sit in the conduit grooves; recesses (r_recess) clear crests.
-//  The raw profile is a sharp square wave; corr_round then fillets every inner
-//  corner via the offset(r) offset(-r) trick, so both the concave recess
-//  corners and the convex tooth tips get a true radius (real conduit is
-//  U-shaped, not square).
+//  The raw profile is a sharp square wave. Two morphological passes round it:
+//    - groove_fillet: a "closing" (grow then shrink) that fills the CONCAVE
+//      groove corners -- including the downward-facing tooth undersides -- so
+//      the printed overhang is eased. It cannot erode the thin teeth.
+//    - corr_round: an "opening" (shrink then grow) that rounds the CONVEX
+//      tooth tips. Done second so it also softens the tips left by the closing.
 inner_pts = concat(
     [ [r_recess, 0] ],                               // flat at the flange end
     [ for (i = [0 : corr_count - 1]) each [
@@ -97,16 +105,18 @@ inner_pts = concat(
 // automatically from [r_outer, 0] back to the first point [r_recess, 0].
 profile = concat(inner_pts, [ [r_outer, length], [r_outer, 0] ]);
 
-// 2D half-section, with the corrugation corners rounded by corr_round.
-// The offset(r) offset(-r) pair fillets every corner by corr_round: convex
-// tooth tips AND the concave recess corners, while leaving the overall size,
-// the straight outer wall and the flat ends essentially untouched.
+// 2D half-section with the groove-bottom (concave) and tooth-tip (convex)
+// fillets applied independently. Each offset pair is a no-op when its radius
+// is 0, so the straight outer wall and the flat ends stay untouched.
 module section_2d() {
-    if (corr_round > 0)
-        offset(r = corr_round) offset(r = -corr_round)
+    rt = corr_round;
+    rg = groove_fillet;
+    // Innermost first: polygon, then the closing pair, then the opening pair.
+    // groove_fillet: closing = grow (fills concave grooves) then shrink back.
+    // corr_round:    opening = shrink (rounds convex tips) then grow back.
+    offset(r = rt) offset(r = -rt)          // opening by corr_round (tips)
+        offset(r = -rg) offset(r = rg)      // closing by groove_fillet (grooves)
             polygon(points = profile);
-    else
-        polygon(points = profile);
 }
 
 module clamp_body() {
