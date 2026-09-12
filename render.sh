@@ -31,11 +31,27 @@ dims() {  # out_name  [extra -D overrides...]
 # Default 16 mm part.
 dims pipe_clamp_dimensions
 
-# 40 mm wall-mount geometry (shared by the 150/180/210° mount presets — coverage
-# does not change the cross-section). Values mirror conduit_40mm_mount.
-dims conduit_40mm_mount_dimensions \
-    -D pipe_diameter=40 -D bore_diameter=70 -D corr_depth=3 -D corr_width=1.333 \
-    -D groove_width=4 -D corr_count=10 -D corr_round=0.3 -D groove_fillet=0.6 \
-    -D flange_overhang=27 -D flange_thickness=3
+# 40 mm wall-mount geometry. Values mirror the conduit_40mm_mount preset in
+# pipe_clamp.json — they must be repeated here because -P does not reach
+# parameters that dimensions.scad picks up via include <pipe_clamp.scad>.
+mount_params=(
+    -D pipe_diameter=40 -D bore_diameter=71 -D corr_depth=2.5 -D corr_width=1.333
+    -D groove_width=4 -D corr_count=7 -D corr_round=0.3 -D groove_fillet=0.6
+    -D coverage_deg=180 -D flange_overhang=27 -D flange_thickness=3
+)
+
+dims conduit_40mm_mount_dimensions "${mount_params[@]}"
+
+# 3D views of the 40 mm mount. Auto-framed (--viewall) rather than using a fixed
+# camera distance, so they stay well composed if the mount's size changes.
+mount_view() {
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1000,1000 \
+        --viewall --autocenter --camera="$2" \
+        --colorscheme=Tomorrow "${mount_params[@]}" pipe_clamp.scad
+}
+
+mount_view conduit_40mm_mount        0,0,0,55,0,-65,0   # main 3/4 view
+mount_view conduit_40mm_mount_top    0,0,0,0,0,-90,0    # straight down the bore
+mount_view conduit_40mm_mount_flange 0,0,0,118,0,25,0   # flange end from below
 
 echo "Rendered images/*.png"

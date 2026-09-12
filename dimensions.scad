@@ -71,5 +71,5 @@ labels = [
 ];
 color("Black")
     for (i = [0 : len(labels) - 1])
-        translate([r_flange + 9 * s, length - i * lh])
+        translate([r_flange + 14 * s, length - i * lh])
             text(labels[i], size = ts, font = "Liberation Mono:style=Regular");
