@@ -117,8 +117,9 @@ Use a caliper and set the parameters accordingly:
 
 ## Usage
 
-Open `pipe_clamp.scad` in the OpenSCAD GUI to tweak parameters live (they appear in the
-Customizer panel, grouped via `/* [Group] */` tags) and press **F5** to preview.
+Open `pipe_clamp.scad` (or `corner_bend.scad`) in the OpenSCAD GUI to tweak parameters
+live (they appear in the Customizer panel, grouped via `/* [Group] */` tags) and press
+**F5** to preview.
 
 ### Export an STL from the command line
 
@@ -170,7 +171,7 @@ Render one preset from the command line:
 openscad -o clamp_16mm.stl -p pipe_clamp.json -P conduit_16mm pipe_clamp.scad
 ```
 
-Or build an STL for **every** preset into `stl/` at once:
+Or build an STL for **every** preset of **both** models into `stl/` at once:
 
 ```sh
 ./build.sh
@@ -182,6 +183,18 @@ Or build an STL for **every** preset into `stl/` at once:
 openscad -o images/pipe_clamp.png --imgsize=1000,1000 \
   --camera=0,0,9,55,0,25,95 --colorscheme=Tomorrow pipe_clamp.scad
 ```
+
+## Addon: corner bend
+
+When the conduit arrives in a **corner** and cannot come at its hole straight on,
+[`corner_bend.scad`](corner_bend.scad) turns it 90° in the space available and hands it
+through the panel on a threaded stuss. It glues onto the flange of a printed
+`conduit_40mm_mount` and is sized entirely off that preset.
+
+![Corner bend](images/corner_bend.png)
+
+It is a narrow, one-off sort of part — the full story is in
+**[CORNER_BEND.md](CORNER_BEND.md)**.
 
 ## Requirements
 

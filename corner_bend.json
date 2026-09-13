@@ -1,0 +1,28 @@
+{
+  "fileFormatVersion": "1",
+  "parameterSets": {
+    "corner_bend": {
+      "part": "body"
+    },
+    "corner_bend_nut": {
+      "part": "nut"
+    },
+    "corner_bend_nut_wide": {
+      "part": "nut",
+      "nut_flange": "13",
+      "nut_flange_t": "2.5"
+    },
+    "corner_bend_hole60": {
+      "part": "body",
+      "hole_diameter": "60",
+      "outlet_bore": "50",
+      "outlet_x": "45",
+      "inlet_len": "32"
+    },
+    "corner_bend_nut_hole60": {
+      "part": "nut",
+      "hole_diameter": "60",
+      "outlet_bore": "50"
+    }
+  }
+}

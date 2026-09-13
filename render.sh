@@ -54,4 +54,28 @@ mount_view conduit_40mm_mount        0,0,0,55,0,-65,0   # main 3/4 view
 mount_view conduit_40mm_mount_top    0,0,0,0,0,-90,0    # straight down the bore
 mount_view conduit_40mm_mount_flange 0,0,0,118,0,25,0   # flange end from below
 
+# ── Corner bend (addon) ─────────────────────────────────────────────────────
+# All from the defaults in corner_bend.scad. Auto-framed (--viewall).
+corner_view() {  # out_name  camera  part
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1200,1100 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        -D "part=\"$3\"" corner_bend.scad
+}
+
+corner_view corner_bend          0,0,0,62,0,32,0  body
+corner_view corner_bend_glue     0,0,0,62,0,200,0 body
+corner_view corner_bend_stand    0,0,0,76,0,32,0  body
+corner_view corner_bend_assembly 0,0,0,66,0,40,0  assembly
+corner_view corner_bend_nut      0,0,0,58,0,20,0  nut
+
+# Cut in half: the chamber, and the wall thickness all the way round it.
+"$OPENSCAD" -o "images/corner_bend_split.png" --imgsize=1400,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="section"' corner_bend.scad
+
+# Dimensioned drawing.
+"$OPENSCAD" -o "images/corner_bend_dimensions.png" --imgsize=1600,1100 \
+    --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
+    --colorscheme=Tomorrow corner_bend_dimensions.scad
+
 echo "Rendered images/*.png"
