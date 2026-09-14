@@ -78,4 +78,20 @@ corner_view corner_bend_nut      0,0,0,58,0,20,0  nut
     --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
     --colorscheme=Tomorrow corner_bend_dimensions.scad
 
+# ── Corner elbow (the simpler addon) ────────────────────────────────────────
+elbow_view() {  # out_name  camera  part
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1200,1100 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        -D "part=\"$3\"" corner_elbow.scad
+}
+
+elbow_view corner_elbow          0,0,0,62,0,32,0  body
+elbow_view corner_elbow_glue     0,0,0,62,0,200,0 body
+elbow_view corner_elbow_print    0,0,0,68,0,50,0  print   # as it goes on the bed
+elbow_view corner_elbow_assembly 0,0,0,66,0,40,0  assembly
+
+"$OPENSCAD" -o "images/corner_elbow_split.png" --imgsize=1400,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="section"' corner_elbow.scad
+
 echo "Rendered images/*.png"

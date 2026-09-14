@@ -1,0 +1,32 @@
+{
+  "parameterSets": {
+    "corner_elbow": {
+      "part": "body"
+    },
+    "corner_elbow_print": {
+      "part": "print"
+    },
+    "corner_elbow_lip": {
+      "part": "body",
+      "locator_h": "15"
+    },
+    "corner_elbow_nut": {
+      "part": "nut"
+    },
+    "corner_elbow_nut_wide": {
+      "part": "nut",
+      "nut_flange": "13"
+    },
+    "corner_elbow_hole60": {
+      "part": "body",
+      "hole_diameter": "60",
+      "outlet_bore": "50"
+    },
+    "corner_elbow_nut_hole60": {
+      "part": "nut",
+      "hole_diameter": "60",
+      "outlet_bore": "50"
+    }
+  },
+  "fileFormatVersion": "1"
+}
