@@ -246,7 +246,7 @@ difference() { pipe(bore, x0 = -1); screw_collar(); }   // cut everywhere but he
 complete bearing ring; the rest of the plate goes.
 
 The price is that the collar ends up standing 4 mm proud of an otherwise open floor, right
-where the channel crosses it — **between 10 and 15 mm from the side wall**. So its outer edge
+where the channel crosses it — **between 13 and 18 mm out of the corner**. So its outer edge
 is chamfered at 45°: the cable rides up a ramp rather than meeting a square step. The chamfer
 is on the top only; the bearing face underneath keeps its full 5 mm width. Over those few
 millimetres the channel is locally back to the 85 % figure; everywhere else it is 96 %.
@@ -267,15 +267,18 @@ and it drops straight back to genus 1 — that is the check that tells the diffe
 ## The hole you have to drill
 
 `outlet_x` sets where the new hole goes, and trades the part's length against how close to
-the corner you have to drill. At the default it is **Ø50, centred 40 mm from the side wall,
-so its near edge is 15 mm from the corner**. Everything is echoed on every render:
+the corner you have to drill. At the default it is **Ø50, centred 43 mm from the wall face,
+so its near edge is 18 mm out of the corner**. Mind which face you measure from: `outlet_x`
+is 40, but it runs from the *glue* face, and the mount's 3 mm flange sits between that and
+the wall. Everything is echoed on every render, from the wall:
 
 ```
 Overall: 70 long x 67 tall x 94 wide
 Blocks: Ø94x4 glue plate | Ø39 elbow, 34 bore, R20 | 60 sq x 4 panel plate | Ø49.2 stuss
 Elbow: 20 mm straight, then a 20 mm radius quarter turn -- R/D = 0.6
 Tube clears the back panel by 0.5 mm; through the turn the cable rides between R3 inside and R37 outside
-Hole centre sits 40 mm from the side wall -- its near edge is 15 mm from the corner
+Hole centre sits 43 mm from the wall face (40 mm from the glue face, + the mount's 3 mm
+flange); the hole's near edge is 18 mm out of the corner
 Panel plate overhangs the hole by 5 mm all round for the nut
 ```
 
@@ -353,9 +356,10 @@ comment in the file says so.
 
 ## The stuss sits 15 mm further out
 
-`outlet_x` is 55 rather than 40, putting the hole's centre **55 mm from the side wall and its
-near edge 30 mm from the corner** — room to get a nut in, and slack for a cabinet that is not
-quite square.
+`outlet_x` is 55 rather than 40, putting the hole's centre **58 mm from the wall face and its
+near edge 33 mm out of the corner** — room to get a nut in, and slack for a cabinet that is
+not quite square. (`outlet_x` itself is measured from the glue face; the mount's 3 mm flange
+is the difference.) The nut's fins then clear the wall by **20.8 mm**, its body by 30.8.
 
 Pushing the hole out does not open the turn; the turn is fixed at R20 by the conduit's height
 above the panel and nothing can change that. What it does is lengthen the **straight run out

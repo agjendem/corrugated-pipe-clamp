@@ -191,8 +191,13 @@ echo(str("Cable's turn, outside of the bend: ", mm1(ride_dx), " mm across by ",
 echo(str("Glue face: Ø", mount_flange_d, " flange, cut off ", pipe_axis_z,
          " mm below its centre by the panel", locator_h > 0
          ? str("; located by a ", locator_h, " mm lip, Ø", locator_od, " over the rim") : ""));
-echo(str("Hole centre sits ", mm1(outlet_x), " mm from the side wall -- its near edge is ",
-         mm1(outlet_x - hole_diameter / 2), " mm from the corner"));
+// Measured from the WALL, which is where you will hold the tape -- not from the
+// glue face, which is mount_flange_t further out with the mount's flange in
+// between. Getting those two confused is a hole drilled 3 mm out of place.
+echo(str("Hole centre sits ", mm1(outlet_x + mount_flange_t), " mm from the wall face (",
+         mm1(outlet_x), " mm from the glue face, + the mount's ", mount_flange_t,
+         " mm flange); the hole's near edge is ",
+         mm1(outlet_x - hole_diameter / 2 + mount_flange_t), " mm out of the corner"));
 echo(str("Bottom face overhangs the hole by ", mm1(bearing), " mm for the nut to clamp"));
 echo(str("One piece, standing on its neck: chamber roof overhangs ", mm1(roof_overhang),
          " deg from vertical", roof_overhang < 50 ? " -- carries itself" :

@@ -284,8 +284,13 @@ echo(str("Nothing crosses the channel. The nut bears on a C, Ø", hole_diameter,
 echo(str("Tube clears the back panel by ", mm1(pipe_axis_z - tube_r),
          " mm; through the turn the cable rides between R", mm1(bend_r - bore / 2),
          " inside and R", mm1(bend_r + bore / 2), " outside"));
-echo(str("Hole centre sits ", mm1(outlet_x), " mm from the side wall -- its near edge is ",
-         mm1(outlet_x - hole_diameter / 2), " mm from the corner"));
+// Measured from the WALL, which is where you will hold the tape -- not from the
+// glue face, which is mount_flange_t further out with the mount's flange in
+// between. Getting those two confused is a hole drilled 3 mm out of place.
+echo(str("Hole centre sits ", mm1(outlet_x + mount_flange_t), " mm from the wall face (",
+         mm1(outlet_x), " mm from the glue face, + the mount's ", mount_flange_t,
+         " mm flange); the hole's near edge is ",
+         mm1(outlet_x - hole_diameter / 2 + mount_flange_t), " mm out of the corner"));
 echo(str("Panel plate overhangs the hole by ", bearing, " mm all round for the nut"));
 echo(str("Neck: thread crest Ø ", neck_od, ", ", neck_length, " mm long (",
          stuss_depth, " mm inside the cabinet)"));
