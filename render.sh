@@ -116,4 +116,24 @@ elbow_view corner_elbow_assembly 0,0,0,66,0,40,0  assembly
     --viewall --autocenter --camera=0,0,0,118,0,25,0 --colorscheme=Tomorrow \
     -D 'part="body"' -D panel_bite=6 -D open_floor=true corner_elbow.scad
 
+# ── Corner elbow, clear channel (its own part) ──────────────────────────────
+clear_view() {  # out_name  camera  part  [extra flags]
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1200,1100 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        -D "part=\"$3\"" corner_elbow_clear.scad
+}
+
+clear_view corner_elbow_clear          0,0,0,62,0,32,0  body
+clear_view corner_elbow_clear_print    0,0,0,68,0,50,0  print
+clear_view corner_elbow_clear_assembly 0,0,0,66,0,40,0  assembly
+
+# Straight up at the underside: the bearing face is a C, open where the channel
+# runs in, and nothing at all crosses the channel.
+"$OPENSCAD" -o "images/corner_elbow_clear_under.png" --imgsize=1100,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="body"' corner_elbow_clear.scad
+"$OPENSCAD" -o "images/corner_elbow_clear_split.png" --imgsize=1400,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="section"' corner_elbow_clear.scad
+
 echo "Rendered images/*.png"

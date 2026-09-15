@@ -35,23 +35,25 @@ choices. The height is the flange's radius plus the conduit's: 47 + 20 = 67, bec
 panel cuts the flange off 20 mm below its centre. The width is the flange itself. Only the
 length is free, and `outlet_x` sets it.
 
-## Two answers
+## Three answers
 
-|  | [`corner_elbow.scad`](corner_elbow.scad) | [`corner_bend.scad`](corner_bend.scad) |
-|---|---|---|
-| shape | four blocks: plate, elbow, plate, stuss | one hulled chamber in a shell |
-| channel | Ø34 throughout, opening to Ø41 at the stuss | Ø34 in, Ø41 out, wide in between |
-| material | **43.8 cm³** | 46.8 cm³ |
-| support, standing on the glue face | 11.2 cm² | **8.3 cm²** |
-| support, standing on the neck | 40.6 cm² | 29.9 cm² |
-| the cable's turn | a 20 mm radius elbow, R/D 0.6 | an open chamber, no tube to follow |
+|  | [`corner_elbow.scad`](corner_elbow.scad) | [`corner_elbow_clear.scad`](corner_elbow_clear.scad) | [`corner_bend.scad`](corner_bend.scad) |
+|---|---|---|---|
+| shape | four blocks: plate, elbow, plate, stuss | the same, with nothing left under the cable | one hulled chamber in a shell |
+| channel | Ø34, floored by our plate or by the panel | Ø34, clear end to end | Ø34 in, Ø41 out, wide in between |
+| the nut bears on | a complete ring | a **C** — 89 % of a ring, on a 6 mm plate | a complete ring |
+| material | 44.0 cm³ (38.7 tight + open) | 50.7 cm³ | 46.8 cm³ |
+| support, on the glue face | 11.2 cm² | 10.0 cm² | **8.3 cm²** |
+| support, on the neck | 40.6 cm² | 52.0 cm² | 29.9 cm² |
 
-Pick the **elbow** if you want a part you can read: every surface belongs to one of four
-blocks and the whole file is primitives. Pick the **chamber** if the cable is the binding
-constraint — it gives the cable an open room to turn in instead of a tight tube.
+Pick the **elbow** for the general case: every surface belongs to one of four blocks and the
+whole file is primitives. Pick the **clear** one when the corner is tight enough that you
+need both the bite and the whole cross-section and cannot live with a threshold in the
+channel. Pick the **chamber** if the cable is the binding constraint — it gives the cable an
+open room to turn in instead of a tight tube.
 
-Note the row that matters most is the same for both: **which face you stand it on when you
-print it is worth three to four times more than which shape you chose.**
+Note the row that matters most is the same for all three: **which face you stand it on when
+you print it is worth three to four times more than which shape you chose.**
 
 ---
 
@@ -291,6 +293,90 @@ Named parameter sets live in [`corner_elbow.json`](corner_elbow.json):
 | `corner_elbow_nut` | the fin-grip nut |
 | `corner_elbow_nut_wide` | the same nut with a bearing flange, for a thin plastic panel |
 | `corner_elbow_hole60`, `corner_elbow_nut_hole60` | a Ø60 hole instead of Ø50 |
+
+---
+
+# The clear channel — nothing crosses it
+
+[`corner_elbow_clear.scad`](corner_elbow_clear.scad) is the elbow with one thing taken out
+and one thing put back.
+
+![Clear channel](images/corner_elbow_clear.png)
+
+**Taken out: the collar.** `open_floor` on the elbow leaves the nut a complete ring, and that
+ring then stands 4 mm proud of an otherwise open floor exactly where the channel crosses it.
+Here the bore goes clean through the plate, the ring included. From the glue face to the hole
+there is nothing in the channel at all.
+
+**Put back: thickness.** The question is whether the part can be strong enough with a bearing
+ring that is cut. Three things say yes:
+
+- **The cut is small.** Where the channel crosses the bearing face it is only **19.3 mm**
+  wide — the bore is Ø34 but its centreline runs 20 mm up, so it is well past its widest by
+  the time it reaches the panel. Against a Ø50 → Ø64 ring that is about 40° of arc and
+  **11 % of the ring's area**. What is left is a C, not a horseshoe.
+- **The legs are tied.** The plate either side of the slot is not two loose flaps: the
+  elbow's own wall arches over the channel and joins them. The section through the cut is a
+  closed box.
+- **Thickness is free here.** In `corner_elbow.scad` the plate is what the cable lies on, so
+  every millimetre of `plate_t` comes straight off the channel. Once the floor is the
+  cabinet's own panel that is no longer true — the bore is cut through the plate whatever its
+  thickness, so thickness is pure stiffness. The plate goes from 4 mm to **6 mm**, which is
+  **3.4× the bending stiffness**, and the bearing from 5 mm to 7 mm. The legs beside the cut
+  are stiffer than the uncut plate ever was.
+
+The model asserts `bearing >= 6` and `plate_t >= 5` and points you back at `corner_elbow.scad`
+below that — the C only works because it is paid for.
+
+| Straight up at the underside: the bearing face is a C, open where the channel runs in |
+|:---:|
+| ![Underside](images/corner_elbow_clear_under.png) |
+
+There is a free check on all of this: **this part is genus 1**, its one handle being the
+stuss's own ring. The `open_floor` variant is genus 2 because its collar bridges the slot,
+and that second handle is exactly what a continuous ring *is*. Genus 1 here is the proof that
+the ring really is cut through.
+
+That makes the invariant worth keeping: *nothing crosses the channel* ⇔ *genus 1*. It earns
+its keep immediately — past a bite of about 7.7 mm the plate and the elbow close a bridge
+across the channel just short of the hole, and the genus flipping to 2 is what says so. The
+model asserts `panel_bite <= 7.5` and points at `corner_elbow.scad` for anything deeper,
+which is built to carry a bridge anyway. The bound is measured rather than derived, and the
+comment in the file says so.
+
+## The stuss sits 15 mm further out
+
+`outlet_x` is 55 rather than 40, putting the hole's centre **55 mm from the side wall and its
+near edge 30 mm from the corner** — room to get a nut in, and slack for a cabinet that is not
+quite square.
+
+Pushing the hole out does not open the turn; the turn is fixed at R20 by the conduit's height
+above the panel and nothing can change that. What it does is lengthen the **straight run out
+of the conduit**, from 20 mm to 35 mm, so the part leaves the glue joint dead straight and
+only then begins to bend. `corner_elbow_clear_near` is the same part back at 40 if you want
+to compare.
+
+| Section: 35 mm straight, then the turn, and no plate under the cable |
+|:---:|
+| ![Section](images/corner_elbow_clear_split.png) |
+
+It costs 6.2 cm³ of the part's 50.7, and dropping the collar costs another 5.8. Both are
+choices you can back out of one number at a time.
+
+## Presets
+
+Named parameter sets live in [`corner_elbow_clear.json`](corner_elbow_clear.json):
+
+| Preset | What it builds |
+|---|---|
+| `corner_elbow_clear` | **the part** |
+| `corner_elbow_clear_print` | the same, laid out on the bed for slicing |
+| `corner_elbow_clear_near` | the stuss back at 40 mm from the wall |
+| `corner_elbow_clear_nut`, `corner_elbow_clear_nut_wide` | the fin-grip nut |
+
+```sh
+openscad -o corner_elbow_clear.stl -p corner_elbow_clear.json -P corner_elbow_clear corner_elbow_clear.scad
+```
 
 ---
 

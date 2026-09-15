@@ -1,0 +1,22 @@
+{
+  "parameterSets": {
+    "corner_elbow_clear": {
+      "part": "body"
+    },
+    "corner_elbow_clear_print": {
+      "part": "print"
+    },
+    "corner_elbow_clear_near": {
+      "part": "body",
+      "outlet_x": "40"
+    },
+    "corner_elbow_clear_nut": {
+      "part": "nut"
+    },
+    "corner_elbow_clear_nut_wide": {
+      "part": "nut",
+      "nut_flange": "13"
+    }
+  },
+  "fileFormatVersion": "1"
+}

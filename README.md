@@ -186,11 +186,12 @@ openscad -o images/pipe_clamp.png --imgsize=1000,1000 \
 
 ## Addon: corner bend
 
-When the conduit arrives in a **corner** and cannot come at its hole straight on, two parts
+When the conduit arrives in a **corner** and cannot come at its hole straight on, three parts
 here turn it 90° in the space available and hand it through the panel on a threaded stuss:
-[`corner_elbow.scad`](corner_elbow.scad) (four blocks, the simpler one) and
-[`corner_bend.scad`](corner_bend.scad) (an open chamber). Both glue onto the flange of a
-printed `conduit_40mm_mount` and are sized entirely off that preset.
+[`corner_elbow.scad`](corner_elbow.scad) (four blocks, the general case),
+[`corner_elbow_clear.scad`](corner_elbow_clear.scad) (the same with nothing left in the
+channel) and [`corner_bend.scad`](corner_bend.scad) (an open chamber). All three glue onto
+the flange of a printed `conduit_40mm_mount` and are sized entirely off that preset.
 
 ![Corner elbow](images/corner_elbow.png)
 
