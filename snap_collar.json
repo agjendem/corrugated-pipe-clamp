@@ -1,0 +1,41 @@
+{
+  "fileFormatVersion": "1",
+  "parameterSets": {
+    "snap_collar_16mm": {
+      "pipe_diameter": "15.8",
+      "valley_diameter": "13.0",
+      "corr_pitch": "3.79",
+      "valley_width": "1.2",
+      "panel_hole": "20",
+      "panel_thickness": "2"
+    },
+    "snap_collar_16mm_bend": {
+      "pipe_diameter": "16.0",
+      "valley_diameter": "14.0",
+      "corr_pitch": "3.372",
+      "valley_width": "1.35",
+      "panel_hole": "20",
+      "panel_thickness": "2"
+    },
+    "snap_collar_16mm_4tooth": {
+      "tooth_count": "4"
+    },
+    "snap_collar_16mm_fittest": {
+      "tooth_count": "2",
+      "flange_thickness": "0.4",
+      "panel_thickness": "0"
+    },
+    "snap_collar_16mm_pipe": {
+      "part": "pipe"
+    },
+    "snap_collar_20mm": {
+      "pipe_diameter": "20",
+      "valley_diameter": "17",
+      "corr_pitch": "4.4",
+      "valley_width": "1.4",
+      "pipe_bore": "14.5",
+      "panel_hole": "25",
+      "flange_diameter": "34"
+    }
+  }
+}

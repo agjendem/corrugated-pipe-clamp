@@ -9,6 +9,10 @@ The whole model is defined in [`pipe_clamp.scad`](pipe_clamp.scad) using
 [OpenSCAD](https://openscad.org/) — change the parameters at the top of the file and the
 geometry updates automatically. All dimensions are in **millimetres**.
 
+> If the pipe is **already** through the hole and cannot be threaded back out, you want
+> [`snap_collar.scad`](snap_collar.scad) instead — it clips on sideways and builds 2 mm into
+> the cabinet. See [Addon: cabinet snap collar](#addon-cabinet-snap-collar).
+
 ## Rendering example
 
 All images below are rendered from the **default parameter values** in the
@@ -183,6 +187,110 @@ Or build an STL for **every** preset of **both** models into `stl/` at once:
 openscad -o images/pipe_clamp.png --imgsize=1000,1000 \
   --camera=0,0,9,55,0,25,95 --colorscheme=Tomorrow pipe_clamp.scad
 ```
+
+## Addon: cabinet snap collar
+
+`pipe_clamp` is a **through-hole** part: its outer diameter *is* the wall hole, so the pipe
+has to be threaded through the hole before the clamp goes on. Sometimes the pipe is already
+there — it comes through a drilled hole in the side of a low-voltage cabinet
+("svakstrømsskap"), nothing holds it, and it can slide back out into the wall cavity.
+
+[`snap_collar.scad`](snap_collar.scad) clips on **sideways** instead: a C of 240°, snapped
+over the pipe and down into its grooves.
+
+![Snap collar](images/snap_collar.png)
+
+### Two things hold it, and neither is a screw
+
+**The load seats it.** The pipe pulls *outward*; the teeth hand that load to the collar; the
+collar's flange lies against the *inside* face of the panel. The very force being resisted
+is what presses the part home — over 201 mm² of bearing. Inward is harmless. So nothing has
+to latch, and everything except the flange lives in the hole and out in the wall:
+
+```
+   <- in the cabinet | panel | in the wall ->
+   __________________|_______|_________________
+  |     flange       | skirt |                 |
+  |     Ø28          | Ø19.6 |                 |
+  |__________________|__ ##__|_##____##________|   teeth, in the grooves
+  - - - - - - - - - - - - - - - - - - - - - - -    centreline
+  |      2 mm        |  2 mm |     7,4 mm      |
+```
+
+**2 mm of build height inside the cabinet**, which is usually all the room there is.
+
+**The hole locks the C shut.** To clip over the pipe the arms must spread 1.77 mm. Once the
+skirt is in the hole they have 0.9 mm to move in. The collar cannot let go of the pipe
+without first leaving the hole, and it cannot leave the hole while the pipe is pulling it
+against the panel:
+
+| | mm |
+|---|---|
+| spread needed to clip over the pipe | **1.77** |
+| room to spread, skirt inside the hole | **0.90** |
+| → lock | **1.97×** |
+
+That ratio is `assert`ed in the model — it is the whole design in one number. To remove the
+collar: push the pipe further in (harmless), pull the collar out of the hole, unclip it.
+
+![Snap collar dimensioned drawing](images/snap_collar_dimensions.png)
+
+| Down the bore | Cut in half | In the panel, on the pipe |
+|:---:|:---:|:---:|
+| ![Mouth](images/snap_collar_mouth.png) | ![Section](images/snap_collar_split.png) | ![Assembly](images/snap_collar_assembly.png) |
+
+### Drill Ø20
+
+For 16 mm conduit, **Ø20** is the recommendation and Ø18 does not work. A Ø18 hole on a
+Ø15.8 crest leaves 1.1 mm of annulus *in total*; after clearances the skirt would be 0.7 mm
+thick, and the model refuses it by name. Ø20 leaves 1.7 mm of gods over the crests.
+
+`coverage_deg` has a narrow window and both ends are asserted: below ~235° the collar
+neither holds the pipe nor gets locked by the hole, above ~290° there is no mouth left to
+get the pipe in.
+
+### Presets
+
+| Preset | What |
+|---|---|
+| `snap_collar_16mm` | the default: pipe 15.8/13.0, pitch 3.79, Ø20 hole, 2 mm panel |
+| `snap_collar_16mm_bend` | the *other* measured "16 mm" pipe — 16.0/14.0, pitch 3.372 |
+| `snap_collar_16mm_4tooth` | four corrugations gripped instead of three |
+| `snap_collar_16mm_fittest` | 2 teeth, no flange, no panel — ~1 g, print this first |
+| `snap_collar_16mm_pipe` | a stub of the conduit itself, to test the clip on |
+| `snap_collar_20mm` | 20 mm conduit, Ø25 hole |
+
+The two 16 mm presets differ because the two projects here measured two different "16 mm"
+pipes — 15.8/13.0/3.79 in this one, 16.0/14.0/3.372 in
+[corrugated-pipe-bend](https://github.com/agjendem/corrugated-pipe-bend). The standard fixes
+the nominal diameter and nothing else, so **measure yours** (see
+[How to measure your conduit](#how-to-measure-your-conduit)) and print
+`snap_collar_16mm_fittest` before committing to a full part. Too tight: raise
+`pipe_clearance` 0.2 at a time. Slides off sideways: raise `coverage_deg` 5° at a time. The
+tooth bottoms out before it seats: raise `bottom_clearance`.
+
+### Printing
+
+**Flange down on the bed, axis vertical.** No support. The tooth undersides are the
+overhang, which is exactly what `groove_fillet` is for, and the layers then lie
+perpendicular to the way the arms bend — the strong direction for the snap, which is the
+load the part meets every time it is clipped on. Pull-out is interlaminar shear at the tooth
+roots, the weak direction, but the area is large — 110 mm² over the three teeth — so the
+margin is enormous either way.
+
+PETG or ASA (a wall cavity gets warm), 0.2 mm layers, 4 perimeters. PLA creeps under a
+permanently loaded part and sits close to its strain limit during the clip-on.
+
+### Shared profile
+
+The corrugation wave and its two fillets are in [`corrugation.scad`](corrugation.scad), used
+by both `pipe_clamp.scad` and `snap_collar.scad`. It is a library, not a part: no parameters
+of its own, nothing drawn at the top level, everything passed as arguments.
+
+It also carries the bound that is easy to get wrong: a closing of radius *R* **seals** any
+slot narrower than 2*R* rather than filleting it. The conduit's own groove is 1.2 mm wide,
+so the 0.6 mm fillet our much wider recesses are happy with would fill the pipe's grooves in
+completely. `CORR_FILLET_MAX` is the margin, and it is asserted.
 
 ## Addon: corner bend
 
