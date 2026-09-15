@@ -6,6 +6,14 @@
     "corner_elbow_print": {
       "part": "print"
     },
+    "corner_elbow_tight": {
+      "part": "body",
+      "panel_bite": "6"
+    },
+    "corner_elbow_tight_print": {
+      "part": "print",
+      "panel_bite": "6"
+    },
     "corner_elbow_lip": {
       "part": "body",
       "locator_h": "15"

@@ -168,6 +168,56 @@ lip on, the whole Ø94 glue face becomes a 2.5 mm overhang and support jumps to 
 the hole is drilled, the stuss locates the part anyway; the lip only helps hold it while the
 glue goes off. `corner_elbow_lip` turns it on for a neck-down print.
 
+## When the corner is tighter than 20 mm
+
+Everything above assumes the conduit lies **on** the back panel, so its axis is exactly its
+own radius off it and the part comes out 67 mm tall. That is the roomiest the corner can be,
+and it is not always what the cabinet gives you. `panel_bite` drives the screw wall in:
+
+```
+panel_bite = 6      →   61 mm tall instead of 67
+```
+
+The elbow's round floor is simply sliced off at that plane, and the panel plate — which is
+4 mm thick and wider than the tube — becomes the channel's floor. The channel stops being
+round and becomes a **D**:
+
+| | `panel_bite = 0` | `panel_bite = 6` |
+|---|---|---|
+| height | 67 mm | **61 mm** |
+| channel floor | 11.5 mm flat | 27.5 mm flat |
+| headroom above it | 33 mm | 27 mm |
+| cross-section | 99 % of Ø34 round | **85 %** |
+| material | 44.0 cm³ | 40.1 cm³ |
+| support, on the glue face | 11.3 cm² | 9.9 cm² |
+
+![Tight variant](images/corner_elbow_tight.png)
+
+| Sliced 6 mm up: the elbow sits on the plate, and the plate is the floor |
+|:---:|
+| ![Section](images/corner_elbow_tight_split.png) |
+
+### The one thing the bite must not be allowed to do
+
+The obvious way to build this is to let the bore keep cutting downward and come out through
+the plate — "the channel can just be open, the cabinet's own panel closes it anyway". It
+cannot. The channel's centreline runs 20 mm above the panel and the bore is Ø34, so at plate
+level the cut is still 24 mm wide, and it runs from the glue face **straight into the bearing
+ring**: at 15 mm from the wall it crosses the very annulus the nut pulls against. The screw
+would be clamping a horseshoe.
+
+So the channel is floored at the **top** of the plate instead. The plate stays a solid slab,
+the bearing ring is a complete 4 mm collar all the way round the stuss, and the cable gets a
+flat floor rather than an open slot — which is better than open, not worse.
+
+| The underside: an unbroken bearing face round a complete thread |
+|:---:|
+| ![Underside](images/corner_elbow_tight_under.png) |
+
+That rule applies at `panel_bite = 0` too, and it is why the baseline part gained 0.2 cm³:
+the bore used to nick a 1 mm groove through the bearing ring there as well. Small, but there
+was no reason for it.
+
 ## The hole you have to drill
 
 `outlet_x` sets where the new hole goes, and trades the part's length against how close to
@@ -196,6 +246,8 @@ Named parameter sets live in [`corner_elbow.json`](corner_elbow.json):
 |---|---|
 | `corner_elbow` | **the part** |
 | `corner_elbow_print` | the same part, laid out on the bed for slicing |
+| `corner_elbow_tight` | the screw wall driven 6 mm in — 61 mm tall, D-shaped channel |
+| `corner_elbow_tight_print` | the same, laid out on the bed |
 | `corner_elbow_lip` | with the locator lip — print this one neck-down |
 | `corner_elbow_nut` | the fin-grip nut |
 | `corner_elbow_nut_wide` | the same nut with a bearing flange, for a thin plastic panel |

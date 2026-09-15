@@ -94,4 +94,15 @@ elbow_view corner_elbow_assembly 0,0,0,66,0,40,0  assembly
     --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
     --colorscheme=Tomorrow -D 'part="section"' corner_elbow.scad
 
+# The tight variant: the screw wall driven 6 mm into the conduit's envelope.
+"$OPENSCAD" -o "images/corner_elbow_tight.png" --imgsize=1200,1100 \
+    --viewall --autocenter --camera=0,0,0,62,0,32,0 --colorscheme=Tomorrow \
+    -D 'part="body"' -D panel_bite=6 corner_elbow.scad
+"$OPENSCAD" -o "images/corner_elbow_tight_split.png" --imgsize=1400,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="section"' -D panel_bite=6 corner_elbow.scad
+"$OPENSCAD" -o "images/corner_elbow_tight_under.png" --imgsize=1200,1100 \
+    --viewall --autocenter --camera=0,0,0,118,0,25,0 --colorscheme=Tomorrow \
+    -D 'part="body"' -D panel_bite=6 corner_elbow.scad
+
 echo "Rendered images/*.png"

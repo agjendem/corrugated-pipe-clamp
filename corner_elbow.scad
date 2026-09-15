@@ -102,6 +102,13 @@ nut_flange_t   = 2.5;
 /* [Layout] */
 outlet_x = 40;   // glue face -> outlet axis (mm). The elbow eats bend_r of it;
                  // what is left is the straight run, echoed below.
+panel_bite = 0;  // how far the screw wall moves INTO the conduit's envelope (mm).
+                 // 0 is the conduit lying on the panel, which is the roomiest the
+                 // corner can be. Raise it when the cabinet sits closer than that:
+                 // the part gets that much shorter, the elbow's round floor is
+                 // sliced away, and the panel plate becomes the channel's floor
+                 // instead. The channel goes from round to D-shaped -- how much
+                 // it costs is echoed below.
 
 /* [Assembly view] */
 show_panel = true;
@@ -117,7 +124,8 @@ tube_od     = bore + 2 * wall;
 tube_r      = tube_od / 2;
 
 glue_d       = mount_flange_d;
-body_h       = pipe_axis_z + glue_d / 2;      // the panel cuts the flange off at 67
+axis_z       = pipe_axis_z - panel_bite;      // conduit axis above the FINISHED panel face
+body_h       = axis_z + glue_d / 2;           // the panel cuts the flange off at 67
 straight_len = outlet_x - bend_r;             // what is left of the run to the arc
 
 neck_od        = hole_diameter - neck_clearance;   // thread CREST diameter
@@ -127,6 +135,20 @@ neck_length    = plate_thickness + stuss_depth;
 outlet_r       = outlet_bore / 2;
 
 plate_w = hole_diameter + 2 * bearing;        // the squared plate, across the flats
+
+// The channel's floor. Below panel_bite there is no part at all, and between
+// panel_bite and the top of the plate there is plate -- so the plate is what the
+// cable ends up lying on, and the round bore is cut off flat at its top face.
+// Nothing below builds from these; they are here to report what the bite costs.
+channel_floor = panel_bite + plate_t;                   // in the pre-shift frame
+floor_drop    = pipe_axis_z - channel_floor;            // floor below the conduit's axis
+cut_into_bore = max(0, bore / 2 - floor_drop);          // how deep the flat eats the bore
+flat_w        = cut_into_bore <= 0 ? 0
+              : 2 * sqrt(pow(bore / 2, 2) - pow(floor_drop, 2));
+seg_area      = cut_into_bore <= 0 ? 0
+              : pow(bore / 2, 2) * acos(floor_drop / (bore / 2)) * PI / 180
+                - floor_drop * flat_w / 2;
+bore_area     = PI * pow(bore / 2, 2) - seg_area;
 
 nut_od         = neck_od + 2 * nut_wall;
 nut_bore_r     = thread_root_r + thread_clearance / 2;
@@ -164,8 +186,16 @@ assert(plate_round < plate_w / 2,
 assert(nut_height <= stuss_depth - 1,
        "nut_height leaves no room inside stuss_depth -- the nut must fit in the cabinet");
 assert(nut_flange == 0 || nut_flange_t < nut_height - 2, "nut_flange_t too thick for nut_height");
-assert(locator_h == 0 || locator_h < mount_flange_d / 2 - pipe_axis_z + 1,
-       "locator_h reaches past the widest point of the flange -- it could not be pushed on");
+assert(locator_h == 0 || panel_bite + locator_h <= pipe_axis_z,
+       str("the lip reaches past the widest point of the flange -- it could not be pushed on. ",
+           "Max locator_h here is ", pipe_axis_z - panel_bite, " mm."));
+assert(panel_bite >= 0, "panel_bite is how far the screw wall moves IN; it cannot be negative");
+assert(panel_bite < pipe_axis_z,
+       str("panel_bite ", panel_bite, " cuts at or above the conduit's axis: the channel would be ",
+           "a shallow trough with nothing to hold a cable in. Max is ", pipe_axis_z - 1, " mm."));
+assert(pipe_axis_z + bore / 2 - channel_floor >= 20,
+       str("panel_bite ", panel_bite, " leaves only ",
+           mm1(pipe_axis_z + bore / 2 - channel_floor), " mm of channel above the plate."));
 
 function mm1(x) = round(x * 10) / 10;
 
@@ -175,6 +205,17 @@ echo(str("Blocks: Ø", mount_flange_d, "x", glue_t, " glue plate | Ø", tube_od,
          " panel plate | Ø", neck_od, " stuss"));
 echo(str("Elbow: ", mm1(straight_len), " mm straight, then a ", bend_r,
          " mm radius quarter turn -- R/D = ", mm1(bend_r / bore)));
+echo(panel_bite == 0
+     ? "Screw wall sits on the conduit's own tangent -- the roomiest the corner can be"
+     : str("Screw wall ", panel_bite, " mm into the conduit: ", mm1(body_h), " tall instead of ",
+           mm1(pipe_axis_z + glue_d / 2)));
+echo(cut_into_bore <= 0
+     ? str("Channel: a full Ø", bore, " round, clear of the plate")
+     : str("Channel: a D on the plate -- ", mm1(flat_w), " mm flat floor, ",
+           mm1(pipe_axis_z + bore / 2 - channel_floor), " mm of headroom, ",
+           mm1(100 * bore_area / (PI * pow(bore / 2, 2))), "% of a full Ø", bore, " bore"));
+echo(str("The panel plate is the channel's floor, uncut: the nut's bearing ring is a complete ",
+         plate_t, " mm collar all round the stuss"));
 echo(str("Tube clears the back panel by ", mm1(pipe_axis_z - tube_r),
          " mm; through the turn the cable rides between R", mm1(bend_r - bore / 2),
          " inside and R", mm1(bend_r + bore / 2), " outside"));
@@ -239,7 +280,7 @@ module glue_plate() {
     intersection() {
         translate([0, 0, pipe_axis_z]) rotate([0, 90, 0])
             cylinder(h = glue_t, d = glue_d);
-        translate([-500, -500, 0]) cube(1000);
+        translate([-500, -500, panel_bite]) cube(1000);
     }
 }
 
@@ -255,7 +296,7 @@ module locator() {
                     cylinder(h = locator_d + 2, d = locator_od);
                     translate([0, 0, -1]) cylinder(h = locator_d + 1, d = locator_id);
                 }
-            translate([-500, -500, 0]) cube([1000, 1000, locator_h]);
+            translate([-500, -500, panel_bite]) cube([1000, 1000, locator_h]);
         }
 }
 
@@ -269,7 +310,7 @@ module locator() {
 // off the bed instead of starting 10 mm up in mid-air.
 module panel_plate() {
     len = outlet_x + plate_w / 2;                  // glue face -> far edge
-    linear_extrude(height = plate_t)
+    translate([0, 0, panel_bite]) linear_extrude(height = plate_t)
         hull() {
             translate([0, -plate_w / 2]) square([0.01, plate_w]);        // square, at the wall
             translate([len - plate_round,  plate_w / 2 - plate_round]) circle(r = plate_round);
@@ -279,7 +320,7 @@ module panel_plate() {
 
 // ── 4. The screw connection ─────────────────────────────────────────────────
 module neck() {
-    intersection() {
+    translate([0, 0, panel_bite]) intersection() {
         translate([outlet_x, 0, -neck_length]) thread_solid(neck_length + 2);
         translate([outlet_x, 0, 0]) union() {
             translate([0, 0, -neck_length])
@@ -292,17 +333,46 @@ module neck() {
 // ============================================================================
 //  THE PART
 // ============================================================================
+//  Built with the screw face at z = panel_bite and then dropped so that face
+//  lands on z = 0, which keeps the assembly, the ghosts and the print layout in
+//  one frame whatever the bite is.
+//
+//  The channel stops at the TOP of the panel plate rather than cutting through
+//  it. That is the one thing the bite must not be allowed to do: run the bore
+//  down through the plate and it opens a slot from the glue face right into the
+//  bearing ring, and the nut loses the collar it pulls against. Stopped at the
+//  plate, the plate simply becomes the channel's floor and the screw stays a
+//  complete, uncut ring at full plate thickness.
 module body() {
+    translate([0, 0, -panel_bite])
     difference() {
-        union() { glue_plate(); pipe(tube_od); panel_plate(); neck(); locator(); }
+        union() {
+            // The tube and the glue plate, with the channel bored clean through
+            // them -- and only them.
+            difference() {
+                intersection() {
+                    union() { glue_plate(); pipe(tube_od); locator(); }
+                    translate([-500, -500, panel_bite]) cube(1000);
+                }
+                pipe(bore, x0 = -1);
+            }
+            // Then the plate is laid in underneath. It is never cut by the
+            // channel, so it simply fills the bottom of the bore and becomes its
+            // floor -- and clipping the bore against the plate's top face would
+            // have put two coincident surfaces in the same plane, which is how
+            // you earn slivers.
+            panel_plate();
+            neck();
+        }
 
-        pipe(bore, x0 = -1, past = neck_length + 1);           // the channel
-        translate([outlet_x, 0, -neck_length - 1])             // bore out the stuss
-            cylinder(h = neck_length + 1, d = outlet_bore);
-        translate([outlet_x, 0, -0.01])                        // and flare up into the elbow
-            cylinder(h = plate_t + 0.02, d1 = outlet_bore, d2 = bore);
-        translate([outlet_x, 0, -neck_length - 0.01])          // cable lead-out
-            cylinder(h = 2.7, d1 = outlet_bore + 4.4, d2 = outlet_bore - 1);
+        translate([0, 0, panel_bite]) {
+            translate([outlet_x, 0, -neck_length - 1])          // bore out the stuss
+                cylinder(h = neck_length + 1, d = outlet_bore);
+            translate([outlet_x, 0, -0.01])                     // and flare up into the elbow
+                cylinder(h = plate_t + 0.02, d1 = outlet_bore, d2 = bore);
+            translate([outlet_x, 0, -neck_length - 0.01])       // cable lead-out
+                cylinder(h = 2.7, d1 = outlet_bore + 4.4, d2 = outlet_bore - 1);
+        }
         translate([-0.1, 0, pipe_axis_z]) rotate([0, 90, 0])   // seat for the cut conduit end
             cylinder(h = pipe_stub + 0.7 + 0.1, d = pipe_diameter + 0.8);
     }
@@ -378,11 +448,11 @@ module wall_ghost() {
 }
 
 module mount_ghost() {
-    color("darkorange", 0.55) translate([-mount_flange_t, 0, pipe_axis_z]) rotate([0, 90, 0])
+    color("darkorange", 0.55) translate([-mount_flange_t, 0, axis_z]) rotate([0, 90, 0])
         cylinder(h = mount_flange_t, d = mount_flange_d);
-    color("darkorange", 0.35) translate([-mount_flange_t - 37, 0, pipe_axis_z])
+    color("darkorange", 0.35) translate([-mount_flange_t - 37, 0, axis_z])
         rotate([0, 90, 0]) cylinder(h = 37, d = 71);
-    color("dimgray", 0.6) translate([-55, 0, pipe_axis_z]) rotate([0, 90, 0])
+    color("dimgray", 0.6) translate([-55, 0, axis_z]) rotate([0, 90, 0])
         cylinder(h = 55 + pipe_stub, d = pipe_diameter);
 }
 
