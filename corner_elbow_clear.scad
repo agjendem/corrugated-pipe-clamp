@@ -277,6 +277,8 @@ echo(cut_into_bore <= 0
            mm1(flat_w), " mm flat floor, ",
            mm1(pipe_axis_z + bore / 2 - channel_floor), " mm of headroom, ",
            mm1(100 * bore_area / (PI * pow(bore / 2, 2))), "% of a full Ø", bore, " bore"));
+echo(str("The stuss's 2 mm overlap into the plate is cut back flush where the channel runs ",
+         "over it, so the floor goes flat into the hole; below the bearing face it is untouched"));
 echo(str("Nothing crosses the channel. The nut bears on a C, Ø", hole_diameter, " -> Ø",
          hole_diameter + 2 * bearing, ", with ", mm1(flat_w), " mm of it cut away -- ",
          mm1(100 - 100 * ring_lost), "% of the ring's area left, on a ", plate_t,
@@ -412,7 +414,23 @@ module body() {
                 panel_plate();
                 pipe(bore, x0 = -1);
             }
-            neck();
+            // The stuss runs 2 mm past the bearing face so it fuses into the
+            // plate instead of meeting it face to face. Where the channel has
+            // taken the plate away there is nothing to fuse to, and those 2 mm
+            // stand up out of the channel's floor as a crescent at the hole's
+            // near edge -- the last thing left in the cable's way. The same bore
+            // takes it out, so the floor runs flat into the hole.
+            //  ONLY above the bearing face. Below it the stuss is what the nut
+            // pulls on and what centres itself in the panel's hole, and notching
+            // it there would spend a slice of its section to buy a millimetre of
+            // lead-in. From the bearing face down it stays a complete ring.
+            difference() {
+                neck();
+                intersection() {
+                    pipe(bore, x0 = -1);
+                    translate([-500, -500, panel_bite]) cube(1000);
+                }
+            }
         }
 
         translate([0, 0, panel_bite]) {

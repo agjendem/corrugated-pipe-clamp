@@ -338,6 +338,20 @@ ring that is cut. Three things say yes:
 The model asserts `bearing >= 6` and `plate_t >= 5` and points you back at `corner_elbow.scad`
 below that — the C only works because it is paid for.
 
+### The last thing in the way
+
+The stuss runs 2 mm past the bearing face so that it fuses into the plate rather than meeting
+it face to face. Everywhere the plate is still there, those 2 mm are buried in it. Where the
+channel has taken the plate away they are not: they stand up out of the channel's floor as a
+crescent at the hole's near edge — 0.2 cm³ of plastic, and the only thing left between the
+conduit and the hole.
+
+The same bore takes it out, so the floor runs flat into the hole. **Only above the bearing
+face**, though: below it the stuss is what the nut pulls on and what centres itself in the
+panel's Ø50 hole, and notching it there would spend a slice of its section to buy a
+millimetre of lead-in. From the bearing face down it is a complete ring, and the thread the
+nut actually engages — 2 to 8 mm below the panel — is never touched.
+
 | Straight up at the underside: the bearing face is a C, open where the channel runs in |
 |:---:|
 | ![Underside](images/corner_elbow_clear_under.png) |
