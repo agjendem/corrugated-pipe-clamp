@@ -35,6 +35,13 @@ choices. The height is the flange's radius plus the conduit's: 47 + 20 = 67, bec
 panel cuts the flange off 20 mm below its centre. The width is the flange itself. Only the
 length is free, and `outlet_x` sets it.
 
+All three share [`thread.scad`](thread.scad) — the threaded stuss and the fin-grip nut,
+ported from the sibling project [corrugated-pipe-bend](https://github.com/agjendem/corrugated-pipe-bend).
+It is a library, not a part: no parameters of its own, nothing drawn at the top level, and a
+contract at the head of the file naming what the including part has to define. Thread and nut
+are cut from the *same* twisted solid grown by `thread_clearance`, which is exactly why they
+belong in one file rather than three copies.
+
 ## Three answers
 
 |  | [`corner_elbow.scad`](corner_elbow.scad) | [`corner_elbow_clear.scad`](corner_elbow_clear.scad) | [`corner_bend.scad`](corner_bend.scad) |
