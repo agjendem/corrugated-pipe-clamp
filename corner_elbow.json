@@ -14,6 +14,16 @@
       "part": "print",
       "panel_bite": "6"
     },
+    "corner_elbow_tight_open": {
+      "part": "body",
+      "panel_bite": "6",
+      "open_floor": "true"
+    },
+    "corner_elbow_tight_open_print": {
+      "part": "print",
+      "panel_bite": "6",
+      "open_floor": "true"
+    },
     "corner_elbow_lip": {
       "part": "body",
       "locator_h": "15"

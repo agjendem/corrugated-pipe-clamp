@@ -182,14 +182,15 @@ The elbow's round floor is simply sliced off at that plane, and the panel plate 
 4 mm thick and wider than the tube — becomes the channel's floor. The channel stops being
 round and becomes a **D**:
 
-| | `panel_bite = 0` | `panel_bite = 6` |
-|---|---|---|
-| height | 67 mm | **61 mm** |
-| channel floor | 11.5 mm flat | 27.5 mm flat |
-| headroom above it | 33 mm | 27 mm |
-| cross-section | 99 % of Ø34 round | **85 %** |
-| material | 44.0 cm³ | 40.1 cm³ |
-| support, on the glue face | 11.3 cm² | 9.9 cm² |
+| | `panel_bite = 0` | `panel_bite = 6` | `+ open_floor` |
+|---|---|---|---|
+| height | 67 mm | **61 mm** | **61 mm** |
+| the channel's floor is | our plate | our plate | the cabinet's panel |
+| flat part of the floor | 11.5 mm | 27.5 mm | 19.3 mm |
+| headroom above it | 33 mm | 27 mm | 31 mm |
+| cross-section | 99 % of Ø34 round | 85 % | **96 %** |
+| material | 44.0 cm³ | 40.1 cm³ | 38.7 cm³ |
+| support, on the glue face | 11.3 cm² | 9.9 cm² | 9.6 cm² |
 
 ![Tight variant](images/corner_elbow_tight.png)
 
@@ -217,6 +218,42 @@ flat floor rather than an open slot — which is better than open, not worse.
 That rule applies at `panel_bite = 0` too, and it is why the baseline part gained 0.2 cm³:
 the bore used to nick a 1 mm groove through the bearing ring there as well. Small, but there
 was no reason for it.
+
+### `open_floor` — give the cross-section back, keep the ring
+
+Flooring the channel on the plate costs 4 mm of depth, and 4 mm is 11 % of the bore's area.
+`open_floor = true` takes it back: the bore is cut through the plate as well, so the cable
+lies on the **cabinet's own back panel** and the channel returns to 96 % of round.
+
+Everything the plate was doing for the channel is given up — except the one ring that cannot
+be:
+
+```openscad
+difference() { pipe(bore, x0 = -1); screw_collar(); }   // cut everywhere but here
+```
+
+`screw_collar()` is the annulus from the edge of the Ø50 hole out to the edge of the plate,
+Ø50 → Ø60, masked out of the cut and left whole at full plate thickness. The nut gets a
+complete bearing ring; the rest of the plate goes.
+
+The price is that the collar ends up standing 4 mm proud of an otherwise open floor, right
+where the channel crosses it — **between 10 and 15 mm from the side wall**. So its outer edge
+is chamfered at 45°: the cable rides up a ramp rather than meeting a square step. The chamfer
+is on the top only; the bearing face underneath keeps its full 5 mm width. Over those few
+millimetres the channel is locally back to the 85 % figure; everywhere else it is 96 %.
+
+| Underside: the slot runs in from the wall and stops dead at the collar |
+|:---:|
+| ![Underside](images/corner_elbow_open_under.png) |
+
+| Section: no plate under the channel, and the ramped collar at the left |
+|:---:|
+| ![Section](images/corner_elbow_open_split.png) |
+
+One thing to know if you check the model the way the rest of this repo does: this variant is
+**genus 2**, not genus 1, and that is correct rather than a sliver. The collar is a closed
+ring bridging a slot that is open at both sides, which is a second handle. Disable the collar
+and it drops straight back to genus 1 — that is the check that tells the difference.
 
 ## The hole you have to drill
 
@@ -248,6 +285,8 @@ Named parameter sets live in [`corner_elbow.json`](corner_elbow.json):
 | `corner_elbow_print` | the same part, laid out on the bed for slicing |
 | `corner_elbow_tight` | the screw wall driven 6 mm in — 61 mm tall, D-shaped channel |
 | `corner_elbow_tight_print` | the same, laid out on the bed |
+| `corner_elbow_tight_open` | and with the floor opened to the panel — 96 % of the bore back |
+| `corner_elbow_tight_open_print` | the same, laid out on the bed |
 | `corner_elbow_lip` | with the locator lip — print this one neck-down |
 | `corner_elbow_nut` | the fin-grip nut |
 | `corner_elbow_nut_wide` | the same nut with a bearing flange, for a thin plastic panel |

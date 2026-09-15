@@ -109,6 +109,11 @@ panel_bite = 0;  // how far the screw wall moves INTO the conduit's envelope (mm
                  // sliced away, and the panel plate becomes the channel's floor
                  // instead. The channel goes from round to D-shaped -- how much
                  // it costs is echoed below.
+open_floor = false;  // let the channel cut clean THROUGH the panel plate, so the
+                 // cable lies on the cabinet's own back panel and gets the whole
+                 // cross-section back. Everything the plate does for the channel
+                 // it gives up -- except the ring the nut pulls against, which is
+                 // masked out of the cut and left whole. See screw_collar().
 
 /* [Assembly view] */
 show_panel = true;
@@ -134,13 +139,16 @@ thread_root_r  = thread_crest_r - thread_depth;
 neck_length    = plate_thickness + stuss_depth;
 outlet_r       = outlet_bore / 2;
 
-plate_w = hole_diameter + 2 * bearing;        // the squared plate, across the flats
+plate_w  = hole_diameter + 2 * bearing;       // the squared plate, across the flats
+collar_od = hole_diameter + 2 * bearing;     // the ring the nut actually pulls on
+collar_chamfer = max(0, min(plate_t - 1.5, bearing - 1.5));  // break its edge: the cable rides up
 
 // The channel's floor. Below panel_bite there is no part at all, and between
 // panel_bite and the top of the plate there is plate -- so the plate is what the
 // cable ends up lying on, and the round bore is cut off flat at its top face.
 // Nothing below builds from these; they are here to report what the bite costs.
-channel_floor = panel_bite + plate_t;                   // in the pre-shift frame
+channel_floor = open_floor ? panel_bite                  // the cabinet's own panel
+                           : panel_bite + plate_t;      // the top of our plate
 floor_drop    = pipe_axis_z - channel_floor;            // floor below the conduit's axis
 cut_into_bore = max(0, bore / 2 - floor_drop);          // how deep the flat eats the bore
 flat_w        = cut_into_bore <= 0 ? 0
@@ -190,6 +198,9 @@ assert(locator_h == 0 || panel_bite + locator_h <= pipe_axis_z,
        str("the lip reaches past the widest point of the flange -- it could not be pushed on. ",
            "Max locator_h here is ", pipe_axis_z - panel_bite, " mm."));
 assert(panel_bite >= 0, "panel_bite is how far the screw wall moves IN; it cannot be negative");
+assert(!open_floor || bearing >= 2.5,
+       str("open_floor takes the plate out from under the channel, so the collar is the ONLY ",
+           "thing the nut has left to pull on. bearing ", bearing, " mm is too thin for that."));
 assert(panel_bite < pipe_axis_z,
        str("panel_bite ", panel_bite, " cuts at or above the conduit's axis: the channel would be ",
            "a shallow trough with nothing to hold a cable in. Max is ", pipe_axis_z - 1, " mm."));
@@ -211,11 +222,17 @@ echo(panel_bite == 0
            mm1(pipe_axis_z + glue_d / 2)));
 echo(cut_into_bore <= 0
      ? str("Channel: a full Ø", bore, " round, clear of the plate")
-     : str("Channel: a D on the plate -- ", mm1(flat_w), " mm flat floor, ",
+     : str("Channel: a D on ", open_floor ? "the cabinet's own panel" : "the plate",
+           " -- ", mm1(flat_w), " mm flat floor, ",
            mm1(pipe_axis_z + bore / 2 - channel_floor), " mm of headroom, ",
            mm1(100 * bore_area / (PI * pow(bore / 2, 2))), "% of a full Ø", bore, " bore"));
-echo(str("The panel plate is the channel's floor, uncut: the nut's bearing ring is a complete ",
-         plate_t, " mm collar all round the stuss"));
+echo(open_floor
+     ? str("Floor open to the cabinet's own panel. The nut's collar is the only plate left in ",
+           "the channel: a ", bearing, " mm ring standing ", plate_t, " mm proud between ",
+           mm1(outlet_x - collar_od / 2), " and ", mm1(outlet_x - hole_diameter / 2),
+           " mm from the wall, ramped at 45 deg so the cable rides over it")
+     : str("The panel plate is the channel's floor, uncut: the nut's bearing ring is a complete ",
+           plate_t, " mm collar all round the stuss"));
 echo(str("Tube clears the back panel by ", mm1(pipe_axis_z - tube_r),
          " mm; through the turn the cable rides between R", mm1(bend_r - bore / 2),
          " inside and R", mm1(bend_r + bore / 2), " outside"));
@@ -318,6 +335,29 @@ module panel_plate() {
         }
 }
 
+// The ring the nut actually pulls against: from the edge of the hole out to the
+// edge of the plate, all the way round. With open_floor it is masked out of the
+// channel's cut, so the bore takes the rest of the plate and leaves this whole.
+//  It ends up standing plate_t proud of the open floor where the channel crosses
+// it, so its outer edge is chamfered at 45° -- the cable rides up a ramp rather
+// than meeting a square step. The chamfer is on the TOP; the bearing face
+// underneath keeps its full width.
+//  Run past the plate in z at both ends: a mask whose faces sit in the same
+// planes as the plate's own is how you get slivers along them.
+module screw_collar() {
+    translate([outlet_x, 0, panel_bite])
+        difference() {
+            union() {
+                translate([0, 0, -1])
+                    cylinder(h = 1 + plate_t - collar_chamfer, d = collar_od);
+                translate([0, 0, plate_t - collar_chamfer])
+                    cylinder(h = collar_chamfer + 1,
+                             d1 = collar_od, d2 = collar_od - 2 * (collar_chamfer + 1));
+            }
+            translate([0, 0, -2]) cylinder(h = plate_t + 4, d = hole_diameter);
+        }
+}
+
 // ── 4. The screw connection ─────────────────────────────────────────────────
 module neck() {
     translate([0, 0, panel_bite]) intersection() {
@@ -356,12 +396,20 @@ module body() {
                 }
                 pipe(bore, x0 = -1);
             }
-            // Then the plate is laid in underneath. It is never cut by the
-            // channel, so it simply fills the bottom of the bore and becomes its
-            // floor -- and clipping the bore against the plate's top face would
-            // have put two coincident surfaces in the same plane, which is how
-            // you earn slivers.
-            panel_plate();
+            // Then the plate is laid in underneath -- solid, so it fills the
+            // bottom of the bore and becomes its floor. (Laid in AFTER the bore
+            // rather than the bore being clipped against its top face: clipping
+            // put two coincident surfaces in one plane, which is how you earn
+            // slivers.)
+            //  With open_floor the channel is taken out of it as well, all but
+            // the collar, and the cable lies on the cabinet's own panel instead.
+            if (open_floor)
+                difference() {
+                    panel_plate();
+                    difference() { pipe(bore, x0 = -1); screw_collar(); }
+                }
+            else
+                panel_plate();
             neck();
         }
 

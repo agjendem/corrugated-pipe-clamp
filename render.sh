@@ -105,4 +105,15 @@ elbow_view corner_elbow_assembly 0,0,0,66,0,40,0  assembly
     --viewall --autocenter --camera=0,0,0,118,0,25,0 --colorscheme=Tomorrow \
     -D 'part="body"' -D panel_bite=6 corner_elbow.scad
 
+# ...and with the floor opened right through to the cabinet's panel.
+"$OPENSCAD" -o "images/corner_elbow_open.png" --imgsize=1200,1100 \
+    --viewall --autocenter --camera=0,0,0,62,0,32,0 --colorscheme=Tomorrow \
+    -D 'part="body"' -D panel_bite=6 -D open_floor=true corner_elbow.scad
+"$OPENSCAD" -o "images/corner_elbow_open_split.png" --imgsize=1400,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="section"' -D panel_bite=6 -D open_floor=true corner_elbow.scad
+"$OPENSCAD" -o "images/corner_elbow_open_under.png" --imgsize=1200,1100 \
+    --viewall --autocenter --camera=0,0,0,118,0,25,0 --colorscheme=Tomorrow \
+    -D 'part="body"' -D panel_bite=6 -D open_floor=true corner_elbow.scad
+
 echo "Rendered images/*.png"
