@@ -64,17 +64,15 @@ period   = corr_width + groove_width;    // one corrugation period along the axi
 length   = corr_count * period;          // total length along the pipe
 r_flange = r_recess + flange_overhang;   // flange outer radius (beyond the pipe)
 
+// The corrugation profile and its two fillets, shared with snap_collar.scad.
+include <corrugation.scad>
+
 assert(bore_diameter > pipe_diameter,
        "bore_diameter must be larger than pipe_diameter");
 assert(r_grip > 0, "corr_depth too large for this pipe_diameter");
-assert(corr_round <= min(corr_width, groove_width) / 2,
-       "corr_round must be <= min(corr_width, groove_width)/2");
-assert(corr_round <= corr_depth,
-       "corr_round must be <= corr_depth");
-assert(groove_fillet <= corr_depth,
-       "groove_fillet must be <= corr_depth");
-assert(groove_fillet <= groove_width / 2,
-       "groove_fillet must be <= groove_width/2");
+for (c = corr_fillet_checks(corr_round, groove_fillet, corr_depth,
+                            groove_width, corr_width))
+    assert(c[0], c[1]);
 
 echo(str("Available material (radial): ", material, " mm"));
 echo(str("Clamp body outer Ø: ", bore_diameter, " mm"));
@@ -84,39 +82,17 @@ echo(str("Length: ", length, " mm"));
 // ── Clamp body: square-wave inner edge with two independent fillets ─────────
 //  Cross-section in the (radius, axial-z) plane, revolved around Z.
 //  Teeth (r_grip) sit in the conduit grooves; recesses (r_recess) clear crests.
-//  The raw profile is a sharp square wave. Two morphological passes round it:
-//    - groove_fillet: a "closing" (grow then shrink) that fills the CONCAVE
-//      groove corners -- including the downward-facing tooth undersides -- so
-//      the printed overhang is eased. It cannot erode the thin teeth.
-//    - corr_round: an "opening" (shrink then grow) that rounds the CONVEX
-//      tooth tips. Done second so it also softens the tips left by the closing.
-inner_pts = concat(
-    [ [r_recess, 0] ],                               // flat at the flange end
-    [ for (i = [0 : corr_count - 1]) each [
-        [r_recess, i * period],                      // recess start (over a crest)
-        [r_recess, i * period + groove_width],       // recess end
-        [r_grip,   i * period + groove_width],       // step in to grip tooth
-        [r_grip,   (i + 1) * period]                 // tooth end / next start
-    ]],
-    [ [r_recess, length] ]                           // flat at the far end
-);
+//  The wave itself and the two fillet passes live in corrugation.scad; what is
+//  local here is only how the section is CLOSED -- for this part, a plain
+//  cylindrical outer wall at r_outer, which is the bore it has to pass through.
+inner_pts = corr_inner(r_recess, r_grip, corr_count, groove_width, corr_width);
 
 // Close the profile along the outer wall (top -> bottom). polygon() closes
 // automatically from [r_outer, 0] back to the first point [r_recess, 0].
 profile = concat(inner_pts, [ [r_outer, length], [r_outer, 0] ]);
 
-// 2D half-section with the groove-bottom (concave) and tooth-tip (convex)
-// fillets applied independently. Each offset pair is a no-op when its radius
-// is 0, so the straight outer wall and the flat ends stay untouched.
 module section_2d() {
-    rt = corr_round;
-    rg = groove_fillet;
-    // Innermost first: polygon, then the closing pair, then the opening pair.
-    // groove_fillet: closing = grow (fills concave grooves) then shrink back.
-    // corr_round:    opening = shrink (rounds convex tips) then grow back.
-    offset(r = rt) offset(r = -rt)          // opening by corr_round (tips)
-        offset(r = -rg) offset(r = rg)      // closing by groove_fillet (grooves)
-            polygon(points = profile);
+    corr_soften(corr_round, groove_fillet) polygon(points = profile);
 }
 
 module clamp_body() {
