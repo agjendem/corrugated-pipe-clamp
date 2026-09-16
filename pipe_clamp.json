@@ -21,6 +21,23 @@
       "pipe_diameter": "40",
       "bore_diameter": "42"
     },
+    "conduit_16mm_stud1": {
+      "pipe_diameter": "16",
+      "bore_diameter": "18",
+      "flange_overhang": "11",
+      "flange_thickness": "2",
+      "screw_count": "1",
+      "screw_pcd": "28"
+    },
+    "conduit_16mm_stud2": {
+      "pipe_diameter": "16",
+      "bore_diameter": "18",
+      "flange_overhang": "11",
+      "flange_thickness": "2",
+      "screw_count": "2",
+      "screw_pcd": "28",
+      "screw_spread": "75"
+    },
     "conduit_40mm_fittest": {
       "pipe_diameter": "40",
       "bore_diameter": "43",
@@ -45,6 +62,22 @@
       "coverage_deg": "180",
       "flange_overhang": "27",
       "flange_thickness": "3"
+    },
+    "conduit_40mm_mount_screws": {
+      "pipe_diameter": "40",
+      "bore_diameter": "71",
+      "corr_depth": "2.5",
+      "corr_width": "1.333",
+      "groove_width": "4",
+      "corr_count": "7",
+      "corr_round": "0.3",
+      "groove_fillet": "0.6",
+      "coverage_deg": "180",
+      "flange_overhang": "27",
+      "flange_thickness": "3",
+      "screw_count": "2",
+      "screw_pcd": "82",
+      "screw_spread": "60"
     }
   }
 }

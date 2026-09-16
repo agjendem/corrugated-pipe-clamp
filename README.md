@@ -146,6 +146,9 @@ Customizer's preset dropdown in the GUI):
 | `conduit_40mm` | 40 | 42 | |
 | `conduit_40mm_fittest` | 40 | 43 | 25° fit-test sliver, measured 40 mm pipe (3 mm deep teeth, no flange) |
 | `conduit_40mm_mount` | 40 | 71 | 180° wall mount, measured 40 mm pipe; Ø71 bore, Ø94 flange (11.5 mm proud of the hole each side), 7 teeth, rounded grooves |
+| `conduit_16mm_stud1` | 16 | 18 | Ø38 brim, **one** countersunk screw — anchors to a stud |
+| `conduit_16mm_stud2` | 16 | 18 | the same with **two**, one each side |
+| `conduit_40mm_mount_screws` | 40 | 71 | the Ø94 mount with two screws on a Ø82 circle |
 
 The plain `conduit_*` presets only set the two diameters (bore = pipe + 2 mm) and inherit
 the default corrugation/flange values — **adjust `corr_depth` and pitch to your actual
@@ -168,6 +171,21 @@ clearance at the valley bottom so the part seats without being forced.
 | Down the bore | 3/4 view | Flange end |
 |:---:|:---:|:---:|
 | ![Mount top view](images/conduit_40mm_mount_top.png) | ![Mount 3/4 view](images/conduit_40mm_mount.png) | ![Mount flange view](images/conduit_40mm_mount_flange.png) |
+
+### Anchoring the clamp to a stud
+
+The flange is an end stop: it catches on the wall hole and stops the pipe being pulled
+through. Widen it and put countersunk holes in it and it becomes a fixing instead — screwed
+to a timber stud, the clamp holds the pipe **both ways** rather than only from pulling out,
+and the hole it sits in no longer has to be any particular size.
+
+![Clamp with a screw brim](images/conduit_16mm_stud2.png)
+
+The holes are in [`brim.scad`](brim.scad), shared with `snap_collar`, and sized for a 3.5 mm
+gipsskrue: Ø4.0 clearance, Ø8.0 bugle head, 90° countersink — which is 2 mm deep, so the
+flange has to be at least that thick (the default 1 mm is not, and the model says so).
+`screw_count` is `0` by default; set it and the asserts will tell you how much wider the
+flange has to be, and how far from the mouth the screws can sit.
 
 Render one preset from the command line:
 
@@ -239,6 +257,45 @@ collar: push the pipe further in (harmless), pull the collar out of the hole, un
 |:---:|:---:|:---:|
 | ![Mouth](images/snap_collar_mouth.png) | ![Section](images/snap_collar_split.png) | ![Assembly](images/snap_collar_assembly.png) |
 
+### Or screw it to a stud
+
+Widen the brim a little, put countersunk holes in it, and the collar stops depending on the
+hole at all — it anchors to a timber stud instead. That is not just a different way of
+holding it, it changes what it can do:
+
+| | holds the pipe |
+|---|---|
+| caught by the hole | **outward only** — inward is harmless, so nothing has to latch |
+| screwed to a stud | **both ways**, and the hole can be any size |
+
+![One screw](images/snap_collar_stud1.png) ![Two screws](images/snap_collar_stud2.png)
+
+One screw goes dead opposite the mouth, where the C is thickest and best supported. Two go
+one to each side, at `screw_spread` degrees. Sized for a **3.5 mm gipsskrue** (30 mm is the
+usual length): Ø4.0 clearance, Ø8.0 bugle head, 90° countersink.
+
+**The brim stays 2 mm thick.** At those sizes the countersink is exactly 2 mm deep, so it
+consumes the whole brim — which is how a countersunk hole in thin material works: there is
+no flat land under the head, the cone *is* the bearing surface, 53 mm² of it. The brim is
+only as wide as that cone plus about a millimetre:
+
+| | r (mm) |
+|---|---|
+| body, incl. the fillet at the skirt root | 10.4 |
+| screw head, inner edge | 11.5 |
+| screw head, outer edge | 19.5 |
+| brim edge | 20.5 |
+
+So Ø41 instead of Ø28, and **the build height into the cabinet is unchanged at 2 mm**.
+
+> The outermost millimetre of the brim is therefore a wedge, not a plate. Give it perimeters
+> rather than infill, and do not drive the screw home hard — a bugle head will split a thin
+> printed brim outward if you lean on it.
+
+The same brim is available on `pipe_clamp` — see
+[Anchoring the clamp to a stud](#anchoring-the-clamp-to-a-stud). `screw_count = 0` is the
+default on both parts, so nothing changes unless you ask for it.
+
 ### Drill Ø20
 
 For 16 mm conduit, **Ø20** is the recommendation and Ø18 does not work. A Ø18 hole on a
@@ -257,6 +314,8 @@ get the pipe in.
 | `snap_collar_16mm_bend` | the *other* measured "16 mm" pipe — 16.0/14.0, pitch 3.372 |
 | `snap_collar_16mm_4tooth` | four corrugations gripped instead of three |
 | `snap_collar_16mm_fittest` | 2 teeth, no flange, no panel — ~1 g, print this first |
+| `snap_collar_16mm_stud1` | Ø41 brim, **one** countersunk screw, opposite the mouth |
+| `snap_collar_16mm_stud2` | Ø41 brim, **two**, one each side |
 | `snap_collar_16mm_pipe` | a stub of the conduit itself, to test the clip on |
 | `snap_collar_20mm` | 20 mm conduit, Ø25 hole |
 
@@ -281,11 +340,17 @@ margin is enormous either way.
 PETG or ASA (a wall cavity gets warm), 0.2 mm layers, 4 perimeters. PLA creeps under a
 permanently loaded part and sits close to its strain limit during the clip-on.
 
-### Shared profile
+### Shared libraries
 
-The corrugation wave and its two fillets are in [`corrugation.scad`](corrugation.scad), used
-by both `pipe_clamp.scad` and `snap_collar.scad`. It is a library, not a part: no parameters
-of its own, nothing drawn at the top level, everything passed as arguments.
+Three things are needed by more than one part, so each lives in one file. None of them is a
+part: no parameters of their own, nothing drawn at the top level, everything passed as
+arguments.
+
+| | |
+|---|---|
+| [`corrugation.scad`](corrugation.scad) | the square-wave profile and its two fillet passes |
+| [`brim.scad`](brim.scad) | countersunk screw holes in a flange |
+| [`thread.scad`](thread.scad) | the threaded stuss and nut the corner parts share |
 
 It also carries the bound that is easy to get wrong: a closing of radius *R* **seals** any
 slot narrower than 2*R* rather than filleting it. The conduit's own groove is 1.2 mm wide,

@@ -51,6 +51,16 @@ coverage_deg   = 200;  // degrees of the pipe circumference covered
 flange_overhang  = 3;  // how far the flange extends beyond the pipe width (mm)
 flange_thickness = 1;  // flange thickness along the pipe axis (mm)
 
+/* [Screw brim -- anchor to a stud instead of trusting the hole] */
+screw_count   = 0;      // [0:none, 1:one, in the middle of the arc, 2:one each side, 3:three]
+screw_pcd     = 30;     // circle the screw centres sit on (mm)
+screw_spread  = 90;     // degrees either side of centre (ignored when count = 1)
+screw_d       = 4.0;    // clearance hole for a 3.5 mm gipsskrue (mm)
+screw_head_d  = 8.0;    // its bugle head (mm)
+screw_cs_angle = 90;    // included angle of the countersink (deg)
+// A screw brim needs a wider flange AND a thicker one than the defaults here:
+// the countersink alone is 2 mm deep. The asserts below say by how much.
+
 /* [Render quality] */
 $fn = 180;
 
@@ -66,6 +76,8 @@ r_flange = r_recess + flange_overhang;   // flange outer radius (beyond the pipe
 
 // The corrugation profile and its two fillets, shared with snap_collar.scad.
 include <corrugation.scad>
+// Countersunk screw holes in the brim, shared with snap_collar.scad.
+include <brim.scad>
 
 assert(bore_diameter > pipe_diameter,
        "bore_diameter must be larger than pipe_diameter");
@@ -73,11 +85,22 @@ assert(r_grip > 0, "corr_depth too large for this pipe_diameter");
 for (c = corr_fillet_checks(corr_round, groove_fillet, corr_depth,
                             groove_width, corr_width))
     assert(c[0], c[1]);
+for (c = brim_checks(screw_count, screw_pcd, screw_spread, screw_d, screw_head_d,
+                     screw_cs_angle, flange_thickness,
+                     r_outer, r_flange, coverage_deg / 2))
+    assert(c[0], c[1]);
 
 echo(str("Available material (radial): ", material, " mm"));
 echo(str("Clamp body outer Ø: ", bore_diameter, " mm"));
 echo(str("Flange Ø: ", 2 * r_flange, " mm"));
 echo(str("Length: ", length, " mm"));
+if (screw_count > 0) {
+    echo(str("Screw brim: ", screw_count, " x Ø", screw_d, " on a Ø", screw_pcd,
+             " circle, ", screw_cs_angle, "° countersink ",
+             brim_cs_depth(screw_head_d, screw_d, screw_cs_angle),
+             " mm deep in a ", flange_thickness, " mm flange"));
+    echo("  Screwed down, the pipe is held BOTH ways -- not just from pulling out.");
+}
 
 // ── Clamp body: square-wave inner edge with two independent fillets ─────────
 //  Cross-section in the (radius, axial-z) plane, revolved around Z.
@@ -115,9 +138,21 @@ module flange() {
 }
 
 // ── Assembly ────────────────────────────────────────────────────────────────
+//  The body is extruded from theta = 0, so the middle of the material is at
+//  coverage_deg/2 -- the cuts are rotated there, because that is where a single
+//  screw has to go and where screw_spread is measured from.
+module body() {
+    difference() {
+        union() {
+            clamp_body();
+            flange();
+        }
+        rotate([0, 0, coverage_deg / 2])
+            brim_screw_cuts(screw_count, screw_pcd, screw_spread, screw_d,
+                            screw_head_d, screw_cs_angle, flange_thickness);
+    }
+}
+
 // Render the model, unless another file (e.g. dimensions.scad) includes this
 // one only for its parameters and modules — it sets DIMENSIONS_ONLY first.
-if (is_undef(DIMENSIONS_ONLY)) union() {
-    clamp_body();
-    flange();
-}
+if (is_undef(DIMENSIONS_ONLY)) body();

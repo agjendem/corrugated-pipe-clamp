@@ -25,6 +25,19 @@
       "flange_thickness": "0.4",
       "panel_thickness": "0"
     },
+    "snap_collar_16mm_stud1": {
+      "screw_count": "1",
+      "screw_pcd": "31",
+      "flange_diameter": "41",
+      "panel_thickness": "45"
+    },
+    "snap_collar_16mm_stud2": {
+      "screw_count": "2",
+      "screw_pcd": "31",
+      "screw_spread": "90",
+      "flange_diameter": "41",
+      "panel_thickness": "45"
+    },
     "snap_collar_16mm_pipe": {
       "part": "pipe"
     },

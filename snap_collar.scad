@@ -84,6 +84,17 @@ mouth_lead   = 0.6;     // lead-in radius on the arm tips (mm); 0 = square lip
 flange_diameter  = 28;  // must cover the hole with a ring to spare (mm)
 flange_thickness = 2;   // the ONLY thing that builds into the cabinet (mm)
 
+/* [Screw brim -- anchor to a stud instead of trusting the hole] */
+screw_count   = 0;      // [0:none, 1:one, dead opposite the mouth, 2:one each side, 3:three]
+screw_pcd     = 31;     // circle the screw centres sit on (mm)
+screw_spread  = 90;     // degrees either side of centre (ignored when count = 1)
+screw_d       = 4.0;    // clearance hole for a 3.5 mm gipsskrue (mm)
+screw_head_d  = 8.0;    // its bugle head (mm)
+screw_cs_angle = 90;    // included angle of the countersink (deg)
+// With the defaults the cone is exactly 2 mm deep -- the whole brim. That is
+// how a countersunk hole in thin material works: the cone is the bearing face.
+// Widen flange_diameter to suit; the asserts below say by how much.
+
 /* [Render quality] */
 $fn = 96;
 
@@ -119,8 +130,15 @@ flange_bearing = PI / 4 * (pow(flange_diameter, 2) - pow(panel_hole, 2))
 tooth_bearing  = tooth_count * PI * (pow(r_crest, 2) - pow(r_tooth, 2))
                  * coverage_deg / 360;
 
+// How far the skirt actually sits inside the hole. With a 2 mm cabinet panel it
+// is the panel; with a 45 mm stud bored through it is however much skirt there
+// is. Either way this is what the hole has to grip to lock the C.
+engagement = min(panel_thickness, length - flange_thickness);
+
 // The corrugation profile and its two fillets, shared with pipe_clamp.scad.
 include <corrugation.scad>
+// Countersunk screw holes in the brim, shared with pipe_clamp.scad.
+include <brim.scad>
 
 function mm1(x) = round(x * 10) / 10;
 function mm2(x) = round(x * 100) / 100;
@@ -159,15 +177,28 @@ assert(skirt_wall >= 1.2,
 assert(flange_diameter >= panel_hole + 6,
        str("flange Ø", flange_diameter, " leaves under 3 mm of bearing ring ",
            "around a Ø", panel_hole, " hole"));
-assert(length > flange_thickness + panel_thickness,
-       str("the collar is ", mm2(length), " mm long but the flange and panel ",
-           "already take ", flange_thickness + panel_thickness,
-           " -- no teeth reach past the wall. Raise tooth_count"));
+// Not "the teeth must reach past the wall" -- that is the wrong question once
+// the thing being bored is a 45 mm stud rather than a 2 mm panel. What matters
+// either way is that enough skirt sits inside the hole for the hole to hold the
+// C shut.
+// panel_thickness = 0 means there is no panel at all -- a bare fit-test clip, or
+// one screwed down where nothing is bored for the skirt to enter. Then there is
+// no hole to lock the C and the snap is on its own, which is what the
+// snap_overlap assert above is for.
+assert(panel_thickness == 0 || engagement >= 1.5,
+       str("only ", mm2(engagement), " mm of skirt sits in the hole, so the hole ",
+           "cannot lock the C. Raise tooth_count (the collar is ", mm2(length),
+           " mm long and the flange takes ", flange_thickness, ")"));
 assert(mouth_lead < r_tooth / 2,
        str("mouth_lead ", mouth_lead, " would eat the arm tips"));
 
 for (c = corr_fillet_checks(corr_round, groove_fillet, corr_depth,
                             recess_w, tooth_w))
+    assert(c[0], c[1]);
+
+for (c = brim_checks(screw_count, screw_pcd, screw_spread, screw_d, screw_head_d,
+                     screw_cs_angle, flange_thickness,
+                     r_skirt + groove_fillet, r_flange, coverage_deg / 2))
     assert(c[0], c[1]);
 
 // ── Report ──────────────────────────────────────────────────────────────────
@@ -191,6 +222,20 @@ echo(str("Bearing area, flange on panel: ", mm1(flange_bearing), " mm^2"));
 echo(str("Bearing area, ", tooth_count, " teeth on the crests: ",
          mm1(tooth_bearing), " mm^2"));
 echo(str("Teeth grip ", tooth_count, " corrugations over ", mm2(length), " mm"));
+echo(panel_thickness == 0
+     ? "No panel: nothing bored for the skirt, so the snap alone holds the C shut"
+     : str("Skirt sits ", mm2(engagement), " mm into the hole"));
+if (screw_count > 0) {
+    echo(str("Screw brim: ", screw_count, " x Ø", screw_d, " on a Ø", screw_pcd,
+             " circle, ", screw_cs_angle, "° countersink ",
+             mm2(brim_cs_depth(screw_head_d, screw_d, screw_cs_angle)),
+             " mm deep in a ", flange_thickness, " mm brim"));
+    echo(str("  head Ø", screw_head_d, " sits between r ",
+             mm2(screw_pcd / 2 - screw_head_d / 2), " and r ",
+             mm2(screw_pcd / 2 + screw_head_d / 2), "; body out to r ",
+             mm2(r_skirt + groove_fillet), ", brim edge r ", mm2(r_flange)));
+    echo("  Screwed down, the pipe is held BOTH ways -- not just from pulling out.");
+}
 
 // ====  THE PART  ============================================================
 //  Cross-section in the (radius, axial-z) plane, revolved through coverage_deg.
@@ -246,11 +291,17 @@ module mouth_lead_cuts() {
 // Turned so the mouth straddles -X: the part is symmetric about the X axis,
 // which is what every view and the section below assume.
 module body() {
-    rotate([0, 0, -coverage_deg / 2])
-        difference() {
-            collar_raw();
-            mouth_lead_cuts();
-        }
+    difference() {
+        rotate([0, 0, -coverage_deg / 2])
+            difference() {
+                collar_raw();
+                mouth_lead_cuts();
+            }
+        // Cut after the rotation, so a screw angle is measured from the middle
+        // of the material -- which is where one screw has to go anyway.
+        brim_screw_cuts(screw_count, screw_pcd, screw_spread, screw_d,
+                        screw_head_d, screw_cs_angle, flange_thickness);
+    }
 }
 
 module body_section() {

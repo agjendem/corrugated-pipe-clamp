@@ -54,6 +54,12 @@ mount_view conduit_40mm_mount        0,0,0,55,0,-65,0   # main 3/4 view
 mount_view conduit_40mm_mount_top    0,0,0,0,0,-90,0    # straight down the bore
 mount_view conduit_40mm_mount_flange 0,0,0,118,0,25,0   # flange end from below
 
+# The same clamp with a screw brim: anchored to a stud rather than caught on the
+# hole, which holds the pipe BOTH ways. From the head side.
+"$OPENSCAD" -o "images/conduit_16mm_stud2.png" --imgsize=1000,1000 \
+    --viewall --autocenter --camera=0,0,0,125,0,205,0 --colorscheme=Tomorrow \
+    -p pipe_clamp.json -P conduit_16mm_stud2 pipe_clamp.scad
+
 # ── Snap collar (addon) ─────────────────────────────────────────────────────
 # All from the defaults in snap_collar.scad. Auto-framed (--viewall).
 collar_view() {  # out_name  camera  part
@@ -76,6 +82,18 @@ collar_view snap_collar_assembly 0,0,0,68,0,215,0 assembly  # in the panel, on t
 "$OPENSCAD" -o "images/snap_collar_split.png" --imgsize=1400,1000 \
     --viewall --autocenter --projection=o --camera=0,0,0,90,0,180,0 \
     --colorscheme=Tomorrow -D 'part="section"' snap_collar.scad
+
+# The screw brim: the same collar, anchored to a stud instead of trusting the
+# hole. One screw opposite the mouth, or two, one each side. Shown from the head
+# side, which is the face that ends up pointing into the cabinet.
+stud_view() {  # out_name  preset  camera
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1000,1000 \
+        --viewall --autocenter --camera="$3" --colorscheme=Tomorrow \
+        -p snap_collar.json -P "$2" snap_collar.scad
+}
+
+stud_view snap_collar_stud1 snap_collar_16mm_stud1 0,0,0,125,0,215,0
+stud_view snap_collar_stud2 snap_collar_16mm_stud2 0,0,0,125,0,215,0
 
 # Dimensioned drawing. snap_collar_dimensions.scad picks the parameters up via
 # include <snap_collar.scad>, so it renders from the defaults, not from -P.
