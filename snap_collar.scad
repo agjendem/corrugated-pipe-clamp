@@ -91,6 +91,10 @@ screw_spread  = 90;     // degrees either side of centre (ignored when count = 1
 screw_d       = 4.0;    // clearance hole for a 3.5 mm gipsskrue (mm)
 screw_head_d  = 8.0;    // its bugle head (mm)
 screw_cs_angle = 90;    // included angle of the countersink (deg)
+screw_head_at_skirt = true; // head on the face the SKIRT rises from -- this part
+                        // is fitted the other way up from pipe_clamp, which has
+                        // its heads on the flange's outer face. Set false to
+                        // match pipe_clamp.
 // With the defaults the cone is exactly 2 mm deep -- the whole brim. That is
 // how a countersunk hole in thin material works: the cone is the bearing face.
 // Widen flange_diameter to suit; the asserts below say by how much.
@@ -230,6 +234,10 @@ if (screw_count > 0) {
              " circle, ", screw_cs_angle, "° countersink ",
              mm2(brim_cs_depth(screw_head_d, screw_d, screw_cs_angle)),
              " mm deep in a ", flange_thickness, " mm brim"));
+    echo(str("  head is countersunk into the ",
+             screw_head_at_skirt ? "SKIRT side (z = " : "outer face (z = ",
+             screw_head_at_skirt ? flange_thickness : 0,
+             ") -- the flange bears on the other face"));
     echo(str("  head Ø", screw_head_d, " sits between r ",
              mm2(screw_pcd / 2 - screw_head_d / 2), " and r ",
              mm2(screw_pcd / 2 + screw_head_d / 2), "; body out to r ",
@@ -300,7 +308,8 @@ module body() {
         // Cut after the rotation, so a screw angle is measured from the middle
         // of the material -- which is where one screw has to go anyway.
         brim_screw_cuts(screw_count, screw_pcd, screw_spread, screw_d,
-                        screw_head_d, screw_cs_angle, flange_thickness);
+                        screw_head_d, screw_cs_angle, flange_thickness,
+                        screw_head_at_skirt);
     }
 }
 

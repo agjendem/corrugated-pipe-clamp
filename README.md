@@ -274,6 +274,12 @@ One screw goes dead opposite the mouth, where the C is thickest and best support
 one to each side, at `screw_spread` degrees. Sized for a **3.5 mm gipsskrue** (30 mm is the
 usual length): Ø4.0 clearance, Ø8.0 bugle head, 90° countersink.
 
+> **The heads are on the skirt side.** This part is fitted the other way up from
+> `pipe_clamp`: the brim's flat face is the one that bears, and the screws go in from the
+> same side the teeth point. `pipe_clamp` has its heads on the opposite face, because its
+> body goes *into* the hole it is screwed beside. `screw_head_at_skirt` flips it if you need
+> the other hand.
+
 **The brim stays 2 mm thick.** At those sizes the countersink is exactly 2 mm deep, so it
 consumes the whole brim — which is how a countersunk hole in thin material works: there is
 no flat land under the head, the cone *is* the bearing surface, 53 mm² of it. The brim is

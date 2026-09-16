@@ -84,16 +84,17 @@ collar_view snap_collar_assembly 0,0,0,68,0,215,0 assembly  # in the panel, on t
     --colorscheme=Tomorrow -D 'part="section"' snap_collar.scad
 
 # The screw brim: the same collar, anchored to a stud instead of trusting the
-# hole. One screw opposite the mouth, or two, one each side. Shown from the head
-# side, which is the face that ends up pointing into the cabinet.
+# hole. One screw opposite the mouth, or two, one each side. Shown from the SKIRT
+# side, which on this part is where the heads are -- it is fitted the other way
+# up from pipe_clamp, so the flat face underneath is the one that bears.
 stud_view() {  # out_name  preset  camera
     "$OPENSCAD" -o "images/$1.png" --imgsize=1000,1000 \
         --viewall --autocenter --camera="$3" --colorscheme=Tomorrow \
         -p snap_collar.json -P "$2" snap_collar.scad
 }
 
-stud_view snap_collar_stud1 snap_collar_16mm_stud1 0,0,0,125,0,215,0
-stud_view snap_collar_stud2 snap_collar_16mm_stud2 0,0,0,125,0,215,0
+stud_view snap_collar_stud1 snap_collar_16mm_stud1 0,0,0,58,0,215,0
+stud_view snap_collar_stud2 snap_collar_16mm_stud2 0,0,0,58,0,215,0
 
 # Dimensioned drawing. snap_collar_dimensions.scad picks the parameters up via
 # include <snap_collar.scad>, so it renders from the defaults, not from -P.

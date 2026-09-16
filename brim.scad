@@ -12,14 +12,28 @@
 //    held by screws   the pipe is stopped BOTH ways, and the part no longer
 //                     depends on the hole being any particular size.
 //
-//  The head sits on the FREE face (z = 0 in both parts); the screw drives in +z,
-//  the same way the body points, into whatever the flange is lying on.
+//  WHICH FACE THE HEAD SITS ON is a property of how the part is fitted, and the
+//  two parts here are fitted opposite ways round, so it is an argument:
 //
-//         z=0  ___                 ___     <- free face, head flush here
+//    head_at_body = false     head on z = 0, the flange's outer face. The body
+//                             points into the hole, the flange lies on the near
+//                             side of what it is screwed to. (pipe_clamp.)
+//
+//         z=0  ___                 ___     <- head flush here
 //              \  \               /  /
 //               \  \_____________/  /      <- 90 deg countersink
 //                \                 /
-//         z=t     -----------------        <- bearing face, against the stud
+//         z=t     -----------------        <- bears here, on the stud
+//
+//    head_at_body = true      head on z = t, the face the body rises from. The
+//                             flange lies on the stud the OTHER way up, with the
+//                             body pointing back at you. (snap_collar.)
+//
+//         z=0     -----------------        <- bears here, on the stud
+//                /                 \
+//               /  /-------------\  \
+//              /  /               \  \
+//         z=t  ---                 ---     <- head flush here
 //
 //  Sized for a 3.5 mm drywall screw (gipsskrue): Ø4.0 clearance, Ø8.0 bugle
 //  head. A 90 deg cone is a good enough seat for a bugle head.
@@ -51,15 +65,30 @@ function brim_screw_angles(count, spread) =
 // The cuts. `t` is the flange thickness; the through hole is drawn generously
 // past both faces, and the cone is extrapolated past z = 0 at its own angle so
 // the countersink keeps exactly cs_angle right up to the surface.
-module brim_screw_cuts(count, pcd, spread, shank_d, head_d, cs_angle, t) {
-    if (count > 0)
-        for (a = brim_screw_angles(count, spread))
-            rotate([0, 0, a]) translate([pcd / 2, 0, 0]) {
-                translate([0, 0, -1]) cylinder(h = t + 2, d = shank_d);
-                translate([0, 0, -1])
-                    cylinder(h = brim_cs_depth(head_d, shank_d, cs_angle) + 1,
-                             d1 = head_d + 2 * tan(cs_angle / 2), d2 = shank_d);
-            }
+// The holes with the head on z = 0, before any flipping.
+module brim_screw_cuts_local(count, pcd, spread, shank_d, head_d, cs_angle, t) {
+    for (a = brim_screw_angles(count, spread))
+        rotate([0, 0, a]) translate([pcd / 2, 0, 0]) {
+            translate([0, 0, -1]) cylinder(h = t + 2, d = shank_d);
+            translate([0, 0, -1])
+                cylinder(h = brim_cs_depth(head_d, shank_d, cs_angle) + 1,
+                         d1 = head_d + 2 * tan(cs_angle / 2), d2 = shank_d);
+        }
+}
+
+module brim_screw_cuts(count, pcd, spread, shank_d, head_d, cs_angle, t,
+                       head_at_body = false) {
+    if (count > 0) {
+        // Reflected in the flange's mid-plane to put the head on the far face.
+        // The through hole is symmetric, so in practice only the cone moves.
+        if (head_at_body)
+            translate([0, 0, t]) mirror([0, 0, 1])
+                brim_screw_cuts_local(count, pcd, spread, shank_d, head_d,
+                                      cs_angle, t);
+        else
+            brim_screw_cuts_local(count, pcd, spread, shank_d, head_d,
+                                  cs_angle, t);
+    }
 }
 
 // Returns [ok, message] pairs so the caller can assert() them under its own
