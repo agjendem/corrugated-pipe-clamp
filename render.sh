@@ -110,7 +110,7 @@ stud_view snap_collar_stud2 snap_collar_16mm_stud2 0,0,0,58,0,215,0
 collar20_params=(
     -D pipe_diameter=20 -D valley_diameter=17 -D corr_pitch=3.83
     -D valley_width=1.03 -D valley_root_width=0.35 -D tooth_bite=1.0
-    -D corr_round=0.15 -D pipe_bore=14.5 -D panel_hole=25 -D flange_diameter=34
+    -D corr_round=0.15 -D pipe_bore=14 -D panel_hole=25 -D flange_diameter=34
 )
 
 collar20_view() {  # out_name  camera  part

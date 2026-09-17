@@ -74,7 +74,13 @@ valley_root_width = 0;  // axial width of the same groove at its ROOT, down on
                         // valley_diameter (mm). 0 says the groove is square --
                         // true enough of the 16 mm pipe, not of the 20 mm one,
                         // whose walls close from ~1.0 to ~0.35
-pipe_bore       = 11;   // the conduit's own bore; only used by part = "pipe" (mm)
+pipe_bore       = 11;   // the conduit's own bore (mm). Only the modelled pipe
+                        // reads it -- part = pipe / assembly / fit -- but get it
+                        // right before printing the stub: bore against root Ø is
+                        // the wall, and the wall is the whole difference between
+                        // conduit that gives under the collar and conduit that
+                        // does not. The measured 20 mm pipe is 14, so 1.5 mm of
+                        // wall at the groove roots: it does not give.
 corr_round      = 0.3;  // fillet on the convex tooth TIPS (mm)
 groove_fillet   = 0.6;  // fillet in the concave groove bottoms (mm); this is the
                         // printed tooth-underside overhang, so bigger prints cleaner
@@ -174,6 +180,17 @@ spread_needed = max(pipe_diameter - chord_recess, snap_overlap);
 hole_slack    = skirt_clearance + hole_tolerance;   // room to spread, in the hole
 lock_ratio    = spread_needed / hole_slack;
 
+// What clipping it on costs the material. Each arm is treated as a straight
+// cantilever of the collar's thinnest wall, bent half the spread over its own
+// arc -- crude for a curved beam, right to well within the order of magnitude,
+// and it is the number that picks the filament.
+//
+// The pipe is taken as RIGID, and on thick-walled conduit that is simply true:
+// it will not squash out of the way, so every millimetre of spread is the
+// collar's to find. Assuming otherwise would only flatter the answer.
+arm_arc     = coverage_deg / 2 / 360 * 2 * PI * (r_recess + r_skirt) / 2;
+clip_strain = 3 * skirt_wall * (spread_needed / 2) / (2 * pow(arm_arc, 2));
+
 inside = flange_thickness;                          // build height in the cabinet
 flange_bearing = PI / 4 * (pow(flange_diameter, 2) - pow(panel_hole, 2))
                  * coverage_deg / 360;
@@ -258,6 +275,11 @@ assert(panel_thickness == 0 || engagement >= 1.5,
            " mm long and the flange takes ", flange_thickness, ")"));
 assert(mouth_lead < r_tooth / 2,
        str("mouth_lead ", mouth_lead, " would eat the arm tips"));
+assert(pipe_bore < valley_diameter,
+       str("pipe_bore Ø", pipe_bore, " is not under the groove root Ø",
+           valley_diameter, ", so the modelled conduit has no wall left at its ",
+           "grooves and part = pipe renders hollow. Nothing about the collar ",
+           "itself depends on this number"));
 
 // tooth_tip_w, not tooth_w: it is the tip the opening pass can rub out.
 for (c = corr_fillet_checks(corr_round, groove_fillet, corr_depth,
@@ -286,6 +308,11 @@ echo(str("Clip-on spread: ", mm2(spread_needed), " mm  (crest past the recess ",
 echo(str("Sideways hold on the pipe: ", mm2(snap_overlap), " mm diametral"));
 echo(str("LOCK: needs ", mm2(spread_needed), " mm to open, has ",
          mm2(hole_slack), " mm in the hole -> ", mm2(lock_ratio), "x"));
+echo(str("Clip-on strain, roughly ", mm1(clip_strain * 100), "%: each arm bends ",
+         mm2(spread_needed / 2), " mm over ", mm1(arm_arc), " mm of arc in ",
+         mm2(skirt_wall), " mm of wall, the pipe giving nothing back. PETG and ",
+         "ASA yield around 4%; PLA is nearer the edge and creeps under a ",
+         "standing load"));
 echo(str("Bearing area, flange on panel: ", mm1(flange_bearing), " mm^2"));
 echo(str("Bearing area, ", tooth_count, " teeth on the crests: ",
          mm1(tooth_bearing), " mm^2"));

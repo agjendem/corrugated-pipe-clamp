@@ -345,6 +345,15 @@ grooves and spread the C. The hole was already there to stop the C spreading, an
 has 2.59× the margin it needs — so on this pipe the lock is doing two jobs, not one. If you
 screw the brim to a stud instead, it does neither and the point is moot.
 
+**The pipe gives nothing back.** This one measures Ø14 inside, so 1.5 mm of wall at the
+groove roots — thick, and stiff with it. It will not squash aside to let the collar on, so
+all 2.33 mm of spread is the collar's to find. The model has always assumed that (the
+conduit is rigid in every calculation here), and the part now prints what it costs: **about
+0.7 % strain**, each arm bending 1.17 mm over 23.6 mm of arc in 2.1 mm of wall. PETG and ASA
+yield near 4 %, so there is room. It is also the reason `pipe_bore` is worth getting right
+before printing `snap_collar_20mm_pipe` — a test stub with the wrong wall gives way when the
+real pipe would not, and tells you the fit is fine when it is not.
+
 ![20 mm snap collar](images/snap_collar_20mm.png)
 
 | Cut in half | On the pipe, in the panel |
@@ -391,7 +400,7 @@ is a wedge a tenth of a millimetre thick. Run it for every new pipe.
 | `snap_collar_20mm` | **20 mm conduit, measured** — pitch 3.83, V groove 1.03 → 0.35, Ø25 hole |
 | `snap_collar_20mm_fittest` | same pipe, 2 teeth, no flange — ~1 g, print this first |
 | `snap_collar_20mm_stud2` | same pipe, Ø46 brim, two countersunk screws |
-| `snap_collar_20mm_pipe` | a stub of the 20 mm conduit, V groove and all |
+| `snap_collar_20mm_pipe` | a stub of the 20 mm conduit — V groove, Ø14 bore, 1.5 mm wall |
 
 The two 16 mm presets differ because the two projects here measured two different "16 mm"
 pipes — 15.8/13.0/3.79 in this one, 16.0/14.0/3.372 in
@@ -414,7 +423,11 @@ roots, the weak direction, but the area is large — 110 mm² over the three tee
 margin is enormous either way.
 
 PETG or ASA (a wall cavity gets warm), 0.2 mm layers, 4 perimeters. PLA creeps under a
-permanently loaded part and sits close to its strain limit during the clip-on.
+permanently loaded part and sits closer to its strain limit during the clip-on. The model
+reports that strain — roughly 0.6–0.7 % at both sizes, against about 4 % for PETG — on the
+assumption that the conduit is rigid and the collar does all the giving, which is what thick
+conduit does. Raise the infill before you reach for a thicker flange: the flange is the only
+thing that builds into the cabinet and there is no room there.
 
 ### Shared libraries
 
