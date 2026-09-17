@@ -19,6 +19,17 @@
 //               recess tooth
 //                 _w    _w
 //
+//  A tooth may also taper. Give tip_w < tooth_w and it comes out a symmetric
+//  trapezoid instead of a square rib, which is what a groove that narrows
+//  towards its root -- a U, or near enough a V -- actually wants:
+//
+//      r_recess  ___         ___
+//               |   |       |   |
+//               |    \     /    \      <- flanks parallel to the groove's own
+//      r_grip   |     |___|      |__    <- a flat of tip_w, not a knife edge
+//                     |<->|
+//                     tip_w
+//
 //  This is a library, not a part: it declares no parameters of its own, draws
 //  nothing at the top level, and reads no globals -- everything arrives as an
 //  argument. `include <corrugation.scad>` and call it.
@@ -36,20 +47,54 @@
 //      r_grip     bore radius of a tooth, seated in a pipe groove
 //      n          how many whole periods
 //      recess_w   axial width of one recess = the pipe's crest width + play
-//      tooth_w    axial width of one tooth  = fits inside the pipe's groove
+//      tooth_w    axial width of one tooth AT ITS BASE, i.e. out at r_recess
 //      z0         where the run starts along the axis
-function corr_inner(r_recess, r_grip, n, recess_w, tooth_w, z0 = 0) =
-    let (period = recess_w + tooth_w)
+//      tip_w      axial width of the tooth AT ITS TIP, in at r_grip. Leave it
+//                 undef (or equal to tooth_w) for the square tooth; anything
+//                 less tapers the flanks -- see "Pointed teeth" below.
+//
+//  Note there is no explicit point at the top of the trailing flank: the next
+//  period's opening [r_recess, ...] is that point, and the final flat closes the
+//  last one. Which is why taper = 0 reproduces the square wave exactly, point
+//  for point, rather than merely equivalently.
+function corr_inner(r_recess, r_grip, n, recess_w, tooth_w, z0 = 0, tip_w = undef) =
+    let (period = recess_w + tooth_w,
+         taper  = (tooth_w - (is_undef(tip_w) ? tooth_w : tip_w)) / 2)
     concat(
         [ [r_recess, z0] ],                                   // flat at the start
         [ for (i = [0 : n - 1]) each [
             [r_recess, z0 + i * period],                      // recess start (over a crest)
-            [r_recess, z0 + i * period + recess_w],           // recess end
-            [r_grip,   z0 + i * period + recess_w],           // step in to grip tooth
-            [r_grip,   z0 + (i + 1) * period]                 // tooth end / next start
+            [r_recess, z0 + i * period + recess_w],           // recess end = tooth base
+            [r_grip,   z0 + i * period + recess_w + taper],   // down the leading flank
+            [r_grip,   z0 + (i + 1) * period - taper]         // across the tip
         ]],
         [ [r_recess, z0 + n * period] ]                       // flat at the far end
     );
+
+// ── Pointed teeth ───────────────────────────────────────────────────────────
+//  A square tooth assumes a square groove. Some conduit has one; plenty does
+//  not. Measure a 20 mm pipe and the groove is a U tending towards a V -- about
+//  1.0 mm across where it opens at the crest, a third of that at the root. A
+//  square 1.0 mm tooth dropped into that lands on the flanks at the very top and
+//  stops. It reads as a tooth and grips like a bump.
+//
+//  So don't reach for the root. Pick how deep to bite, ask the groove how wide
+//  it is down there, and cut the tooth to that. The flanks then run parallel to
+//  the groove's own and the tooth beds against both of them over its whole
+//  depth, instead of pinching at one corner.
+//
+//  Linear interpolation along a flank: the width at radius r, given the width
+//  measured at two radii. w_tip belongs to r_tip (deeper, narrower), w_base to
+//  r_base (shallower, wider). Extrapolates happily past either end.
+function corr_taper_width(r, r_tip, r_base, w_tip, w_base) =
+    w_tip + (w_base - w_tip) * (r - r_tip) / (r_base - r_tip);
+
+//  Two things to keep an eye on, and both have an assert waiting below or in the
+//  caller. A tooth you sharpen is a rib you thin, and the opening pass erases
+//  ribs -- so tip_w, not tooth_w, is what the fillet bound has to clear. And a
+//  sloped load face is a wedge: pull on it and some fraction of the pull tries
+//  to lift the tooth out of the groove, which is a thing the part around it now
+//  has to resist.
 
 // Total axial length of a corr_inner() run -- so callers never re-derive it.
 function corr_length(n, recess_w, tooth_w) = n * (recess_w + tooth_w);
@@ -88,11 +133,16 @@ module corr_soften(round_r, fillet_r) {
 //  recesses are happy with.
 CORR_FILLET_MAX = 0.45;
 
-function corr_fillet_checks(round_r, fillet_r, depth, recess_w, tooth_w) = [
-    [ round_r  <= CORR_FILLET_MAX * min(recess_w, tooth_w),
+//  tip_w defaults to tooth_w, the square tooth, where base and tip are the same
+//  rib. When the tooth tapers it is the TIP that has to survive the opening, so
+//  that is the width the first bound is measured against.
+function corr_fillet_checks(round_r, fillet_r, depth, recess_w, tooth_w,
+                            tip_w = undef) =
+    let (thinnest = min(tooth_w, is_undef(tip_w) ? tooth_w : tip_w)) [
+    [ round_r  <= CORR_FILLET_MAX * min(recess_w, thinnest),
       str("corr_round ", round_r, " must be <= ", CORR_FILLET_MAX,
-          " x min(tooth, recess) = ",
-          CORR_FILLET_MAX * min(recess_w, tooth_w),
+          " x min(tooth tip, recess) = ",
+          CORR_FILLET_MAX * min(recess_w, thinnest),
           " -- above that the opening erases the tooth instead of rounding it") ],
     [ round_r  <= depth,
       str("corr_round ", round_r, " must be <= the tooth depth ", depth) ],
