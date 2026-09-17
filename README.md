@@ -312,6 +312,71 @@ thick, and the model refuses it by name. Ø20 leaves 1.7 mm of gods over the cre
 neither holds the pipe nor gets locked by the hole, above ~290° there is no mouth left to
 get the pipe in.
 
+### 20 mm: the groove is not a slot
+
+The 16 mm pipe measured here has a groove square enough to model as one. The 20 mm pipe does
+not. Measured: five corrugations over 19.15 mm, crest 2.8 mm wide, and a groove that opens
+about 1.0 mm at the crest and closes to roughly a third of that at the root — a U tending
+towards a V.
+
+A square tooth cut to the groove's mouth width **does not go in**. It is 0.83 mm wide and
+the groove is only that wide 0.44 mm down, so it lands on the flanks near the top and stops
+— less than half the intended bite. Rendered it looks perfect; on the pipe it grips like a
+bump. Run the check below against such a tooth and 16 mm³ of it is inside the pipe, in six
+rings hugging the groove walls from r 9.0 right out to the crest at r 10.0.
+
+So the tooth tapers with the groove:
+
+| | |
+|---|---|
+| `valley_width` | the groove's width **at the crest**, where it opens — 1.03 (pitch 3.83 − crest 2.8) |
+| `valley_root_width` | its width **at the root**, down on `valley_diameter` — 0.35. `0` means square-bottomed, and every 16 mm preset leaves it there |
+| `tooth_bite` | how far in past the crest the tooth reaches — 1.0, stopping 0.5 mm clear of the root |
+
+Both ends of the tooth are read off the groove's own flank line, stepped back
+`tooth_side_play`/2, so the clearance is 0.1 mm per side at *every* depth rather than
+pinching at one corner. The tooth comes out 0.92 mm at the base and 0.38 mm at the tip. At
+0.2 mm layers that tip is a ring two layers tall, not a thin wall — printable in this
+orientation precisely because the taper runs along the axis.
+
+**The wedge.** A sloped load face gives some of the pull back as a push outwards: 12.8° off
+square here, so 22.7 % of whatever pulls the pipe is trying to cam the teeth out of the
+grooves and spread the C. The hole was already there to stop the C spreading, and at Ø25 it
+has 2.59× the margin it needs — so on this pipe the lock is doing two jobs, not one. If you
+screw the brim to a stud instead, it does neither and the point is moot.
+
+![20 mm snap collar](images/snap_collar_20mm.png)
+
+| Cut in half | On the pipe, in the panel |
+|---|---|
+| ![Section](images/snap_collar_20mm_split.png) | ![Assembly](images/snap_collar_20mm_assembly.png) |
+
+![20 mm dimensioned drawing](images/snap_collar_20mm_dimensions.png)
+
+**Pitch.** Three teeth means the pitch error piles up along the run: 0.1 mm per corrugation,
+counting out from the middle tooth, before the outermost runs out of play. Measure over five
+and divide — 19.15/5 = 3.83 — rather than measuring one. The model prints the tolerance it
+has. A tapered tooth is forgiving here in a way a square one is not: off-pitch it seats a
+little less deep instead of jamming.
+
+### Checking a tooth against a pipe you measured
+
+```sh
+openscad --export-format asciistl -o /dev/null \
+    -D 'part="fit"' -p snap_collar.json -P snap_collar_20mm snap_collar.scad
+```
+
+(`--export-format` is not optional here — OpenSCAD picks the exporter off the file suffix,
+and `/dev/null` has none.)
+
+`part = "fit"` intersects the collar with the modelled conduit. It must print **"Current top
+level object is empty"**. Anything else is material the slicer will lay down inside the
+groove, and the part will sit proud of the pipe by however thick it is.
+
+This is in the dispatch because the eye cannot do it. A tooth that bottoms on the flanks of
+a V looks right in every view — correct depth, correct width, seated — and the interference
+is a wedge a tenth of a millimetre thick. Run it for every new pipe.
+
 ### Presets
 
 | Preset | What |
@@ -323,7 +388,10 @@ get the pipe in.
 | `snap_collar_16mm_stud1` | Ø41 brim, **one** countersunk screw, opposite the mouth |
 | `snap_collar_16mm_stud2` | Ø41 brim, **two**, one each side |
 | `snap_collar_16mm_pipe` | a stub of the conduit itself, to test the clip on |
-| `snap_collar_20mm` | 20 mm conduit, Ø25 hole |
+| `snap_collar_20mm` | **20 mm conduit, measured** — pitch 3.83, V groove 1.03 → 0.35, Ø25 hole |
+| `snap_collar_20mm_fittest` | same pipe, 2 teeth, no flange — ~1 g, print this first |
+| `snap_collar_20mm_stud2` | same pipe, Ø46 brim, two countersunk screws |
+| `snap_collar_20mm_pipe` | a stub of the 20 mm conduit, V groove and all |
 
 The two 16 mm presets differ because the two projects here measured two different "16 mm"
 pipes — 15.8/13.0/3.79 in this one, 16.0/14.0/3.372 in
@@ -332,7 +400,9 @@ the nominal diameter and nothing else, so **measure yours** (see
 [How to measure your conduit](#how-to-measure-your-conduit)) and print
 `snap_collar_16mm_fittest` before committing to a full part. Too tight: raise
 `pipe_clearance` 0.2 at a time. Slides off sideways: raise `coverage_deg` 5° at a time. The
-tooth bottoms out before it seats: raise `bottom_clearance`.
+tooth bottoms out before it seats: raise `bottom_clearance`, or if the groove turns out to
+be a V, say so with `valley_root_width` and cut `tooth_bite` — see
+[20 mm: the groove is not a slot](#20-mm-the-groove-is-not-a-slot).
 
 ### Printing
 
@@ -354,14 +424,20 @@ arguments.
 
 | | |
 |---|---|
-| [`corrugation.scad`](corrugation.scad) | the square-wave profile and its two fillet passes |
+| [`corrugation.scad`](corrugation.scad) | the corrugation profile — square or tapered — and its two fillet passes |
 | [`brim.scad`](brim.scad) | countersunk screw holes in a flange |
 | [`thread.scad`](thread.scad) | the threaded stuss and nut the corner parts share |
 
 It also carries the bound that is easy to get wrong: a closing of radius *R* **seals** any
-slot narrower than 2*R* rather than filleting it. The conduit's own groove is 1.2 mm wide,
-so the 0.6 mm fillet our much wider recesses are happy with would fill the pipe's grooves in
-completely. `CORR_FILLET_MAX` is the margin, and it is asserted.
+slot narrower than 2*R* rather than filleting it, and an opening of radius *R* **erases** any
+rib thinner than 2*R*. The conduit's own groove is 1.2 mm wide, so the 0.6 mm fillet our much
+wider recesses are happy with would fill the pipe's grooves in completely. `CORR_FILLET_MAX`
+is the margin, and it is asserted.
+
+The taper sharpens that second bound rather than adding a new one: a tooth you point is a rib
+you thin, so it is the 0.38 mm **tip**, not the 0.92 mm base, that the opening pass has to
+clear. Hence `corr_round` drops from 0.3 to 0.15 on the 20 mm preset, and the assert names
+the number.
 
 ## Addon: corner bend
 

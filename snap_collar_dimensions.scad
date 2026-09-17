@@ -57,7 +57,8 @@ module pipe_section_2d() {
     difference() {
         corr_soften(corr_round, pipe_fillet)
             polygon(points = concat(
-                corr_inner(r_crest, r_valley, nn, pipe_crest_w, valley_width, zz),
+                corr_inner(r_crest, r_valley, nn, pipe_crest_w, valley_width, zz,
+                           tip_w = groove_tip_w),
                 [[pipe_bore / 2, zz + len], [pipe_bore / 2, zz]]));
         translate([-1, zz - 1]) square([1 + pipe_bore / 2, len + 2]);
     }
@@ -134,7 +135,13 @@ labels = [
     str("pipe_diameter   = ", pipe_diameter, " mm   crest Ø  -- MEASURE YOURS"),
     str("valley_diameter = ", valley_diameter, " mm   groove root Ø"),
     str("corr_pitch      = ", corr_pitch, " mm   x ", tooth_count, " teeth"),
-    str("valley_width    = ", valley_width, " mm   -> tooth ", mm2(tooth_w), " wide"),
+    str("valley_width    = ", valley_width, " mm   groove at the crest"),
+    valley_root_width > 0
+      ? str("valley_root_w   = ", valley_root_width,
+            " mm   and at the root -- a V")
+      : "                      (groove taken as square-bottomed)",
+    str("-> tooth ", mm2(tooth_w), " at the base, ", mm2(tooth_tip_w),
+        " at the tip, ", mm2(r_crest - r_tooth), " mm deep"),
     "",
     str("panel_hole      = ", panel_hole, " mm   RECOMMENDED drill"),
     str("panel_thickness = ", panel_thickness, " mm"),

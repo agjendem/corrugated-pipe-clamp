@@ -102,6 +102,33 @@ stud_view snap_collar_stud2 snap_collar_16mm_stud2 0,0,0,58,0,215,0
     --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
     --colorscheme=Tomorrow snap_collar_dimensions.scad
 
+# ── Snap collar, 20 mm: the pointed tooth ───────────────────────────────────
+# The measured 20 mm conduit has a groove that closes from ~1.0 mm at the crest
+# to ~0.35 at the root, so the tooth is a wedge, not a square rib. Same repeat
+# as mount_params above: these mirror the snap_collar_20mm preset and have to be
+# written out because -P does not reach the dimensions file's included values.
+collar20_params=(
+    -D pipe_diameter=20 -D valley_diameter=17 -D corr_pitch=3.83
+    -D valley_width=1.03 -D valley_root_width=0.35 -D tooth_bite=1.0
+    -D corr_round=0.15 -D pipe_bore=14.5 -D panel_hole=25 -D flange_diameter=34
+)
+
+collar20_view() {  # out_name  camera  part
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1000,1000 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        "${collar20_params[@]}" -D "part=\"$3\"" snap_collar.scad
+}
+
+collar20_view snap_collar_20mm          0,0,0,62,0,215,0 body
+# Cut in half: this is the one to look at. The teeth are wedges following the
+# groove's own walls, and they stop 0.5 mm short of the root on purpose.
+collar20_view snap_collar_20mm_split    0,0,0,90,0,180,0 section
+collar20_view snap_collar_20mm_assembly 0,0,0,68,0,215,0 assembly
+
+"$OPENSCAD" -o "images/snap_collar_20mm_dimensions.png" --imgsize=1700,1100 \
+    --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
+    --colorscheme=Tomorrow "${collar20_params[@]}" snap_collar_dimensions.scad
+
 # ── Corner bend (addon) ─────────────────────────────────────────────────────
 # All from the defaults in corner_bend.scad. Auto-framed (--viewall).
 corner_view() {  # out_name  camera  part
