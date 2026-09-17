@@ -281,7 +281,14 @@ module mouth_fillet() {
     difference() {
         intersection() {                                   // the square corner
             translate([0, 0, -1]) cylinder(h = length + 2, r = r_tooth + R);
-            translate([0, 0, -1]) cube([r_tooth + R + 1, R, length + 2]);
+            // Reaching 1 mm PAST the mouth plane, not stopping dead on it. The
+            // extrusion's own start face lies at y = 0 and the arc is empty
+            // below it at these x, so the overshoot cuts nothing -- but a
+            // subtrahend that ends exactly on the face it is cutting leaves
+            // slivers, and here they came out as loose 0.06 mm flecks sitting
+            // on the tooth tips, four separate shells hanging off the part.
+            translate([0, -1, -1])
+                cube([r_tooth + R + 1, R + 1, length + 2]);
         }
         translate([cx, R, -2])                             // the rod in it
             cylinder(h = length + 4, r = R, $fn = 24);
