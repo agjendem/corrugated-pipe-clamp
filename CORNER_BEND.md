@@ -121,8 +121,11 @@ cable you have, this is the wrong one of the two parts; take the chamber.
 ## The plates
 
 The **glue plate** is a plain Ø94 disc, `glue_t` thick, cut off flat by the back panel. That
-cut is what makes the part 67 mm tall. A recess in its face takes the 1 mm of conduit
-standing proud of the mount.
+cut is what makes the part 67 mm tall. A recess in its face — **Ø42.8 × 2 mm deep** — takes
+the cut conduit end. Its depth is given outright rather than derived from `pipe_stub`, because
+a conduit is never cut as square as the drawing says and the plate has to bed on the *mount*,
+not on the pipe's ragged end; what is left of `glue_t` behind it is the annular seat the pipe
+butts against, and an assert keeps it from being cut away.
 
 The **panel plate** is squared, not round: at the same overhang past the hole it gives the
 nut more ring to pull on, and it is the one face with nothing round to match. It runs all the
@@ -150,7 +153,7 @@ It is worth being concrete about why, because it is the single biggest decision 
 | **the glue face** | 39.8 cm² | 11.2 cm² |
 | the threaded neck | 0.6 cm² | 40.6 cm² |
 
-Standing on the neck, the *entire* bottom face of the part floats 9 mm up on a Ø46 ring and
+Standing on the neck, the *entire* bottom face of the part floats 11 mm up on a Ø46 ring and
 the slicer fills the whole footprint. Standing on the glue face, a Ø94 disc is welded to the
 bed and almost everything else grows upward off it:
 
@@ -282,9 +285,12 @@ flange); the hole's near edge is 18 mm out of the corner
 Panel plate overhangs the hole by 5 mm all round for the nut
 ```
 
-The stuss carries 7 mm into the cabinet, where the fin-grip nut from the sibling project
-[corrugated-pipe-bend](https://github.com/agjendem/corrugated-pipe-bend) clamps the panel
-from inside. Thread and nut are cut from the *same* twisted solid grown by
+The stuss carries 9 mm into the cabinet. Every millimetre of the neck is thread, so
+`plate_thickness + stuss_depth` is the whole threaded length: **11 mm, 3.7 turns at 3 mm
+pitch**, of which the 6 mm nut takes 2 — the rest is there to reach through a panel thicker
+than the drawing's 2 mm. The turn count is echoed on every render. Inside the cabinet the
+fin-grip nut from the sibling project
+[corrugated-pipe-bend](https://github.com/agjendem/corrugated-pipe-bend) clamps the panel. Thread and nut are cut from the *same* twisted solid grown by
 `thread_clearance`, so they cannot mismatch.
 
 ## Presets
