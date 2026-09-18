@@ -52,6 +52,14 @@ pipe_diameter  = 40;   // conduit crest Ø (mm). The conduit lies against the pa
                        // so this alone fixes how far its axis sits off the panel.
 mount_flange_t = 3;    // the mount's flange thickness (mm)
 pipe_stub      = 1;    // how far the cut conduit end stands proud of the flange (mm)
+// The glue face is counterbored so the cut conduit end has somewhere to go. It
+// is given its own depth rather than being derived from pipe_stub + a fudge:
+// the pipe is never cut off as square as the drawing says, and the flange has
+// to bed on the mount, not on the pipe's ragged end. Depth is measured from the
+// glue face; the plate is glue_t thick, and what is left behind the recess is
+// the annular seat the pipe butts against -- asserted below.
+pipe_recess     = 2;   // depth of that recess (mm)
+pipe_recess_fit = 2.8; // diametral clearance over the conduit crest (mm)
 glue_t         = 4;    // thickness of the plate that beds on the flange (mm)
 locator_h      = 15;   // height of the lip that grips the flange's rim (mm); 0 = none.
                        // It runs only along the BOTTOM of the flange, because that is
@@ -71,7 +79,11 @@ wall        = 3;    // material around the chamber (mm)
 /* [Cabinet panel] */
 hole_diameter   = 50;  // the NEW hole to drill in the back panel (mm)
 plate_thickness = 2;   // the panel's own thickness (mm)  <- MEASURE YOURS
-stuss_depth     = 7;   // how far the threaded neck carries on INTO the cabinet (mm)
+stuss_depth     = 9;   // how far the threaded neck carries on INTO the cabinet (mm).
+                       // With plate_thickness this is the whole threaded length,
+                       // so it alone sets how many turns of thread there are to
+                       // run the nut down -- echoed below. At 7 mm the neck did not
+                       // reach far enough through the panel to take the nut.
 
 /* [Layout] */
 outlet_x = 40;   // glue face -> outlet axis (mm). This sets the overall length,
@@ -123,6 +135,7 @@ neck_od        = hole_diameter - neck_clearance; // thread CREST diameter
 thread_crest_r = neck_od / 2;
 thread_root_r  = thread_crest_r - thread_depth;
 neck_length    = plate_thickness + stuss_depth;
+thread_turns   = neck_length / (thread_pitch * thread_starts);
 outlet_r       = outlet_bore / 2;
 boss_d         = max(2 * outlet_r + 2 * wall, hole_diameter + 2 * bearing);
 
@@ -173,6 +186,12 @@ assert(chamber_h <= boss_h, "chamber_h must not reach past the outlet flare");
 assert(inlet_od / 2 <= pipe_axis_z + 0.001,
        str("The body's tube is Ø", inlet_od, ", wider than the conduit it follows -- it would ",
            "sit proud of the back panel. Reduce inlet_bore or wall."));
+assert(pipe_recess >= pipe_stub,
+       str("The recess is only ", pipe_recess, " mm deep but the conduit stands ", pipe_stub,
+           " mm proud of the flange -- the glue face would bed on the pipe, not the mount."));
+assert(glue_t - pipe_recess >= 1.5,
+       str("Only ", mm1(glue_t - pipe_recess), " mm of glue plate left behind the recess. That ",
+           "annulus is the seat the pipe end butts against -- raise glue_t or cut the recess back."));
 assert(inlet_len > glue_t, "inlet_len must run past the glue plate");
 assert(locator_h == 0 || locator_h < mount_flange_d / 2 - pipe_axis_z + 1,
        "locator_h reaches past the widest point of the flange -- it could not be pushed on");
@@ -203,7 +222,12 @@ echo(str("One piece, standing on its neck: chamber roof overhangs ", mm1(roof_ov
          " deg from vertical", roof_overhang < 50 ? " -- carries itself" :
          " -- OVER 50 deg, will want support inside the chamber"));
 echo(str("Neck: thread crest Ø ", neck_od, ", ", neck_length, " mm long (",
-         stuss_depth, " mm inside the cabinet)"));
+         stuss_depth, " mm inside the cabinet) = ", mm1(thread_turns),
+         " turns at ", thread_pitch, " mm pitch; the nut takes ",
+         mm1(nut_height / (thread_pitch * thread_starts)), " of them"));
+echo(str("Glue face: recess Ø", pipe_diameter + pipe_recess_fit, " x ", pipe_recess,
+         " mm deep for the cut pipe end (it stands ", pipe_stub, " mm proud); ",
+         mm1(glue_t - pipe_recess), " mm of plate behind it"));
 echo(str("Nut: Ø ", nut_od, " body, Ø ", 2 * nut_fin_r, " over the fins, ", nut_height, " mm tall"));
 
 // The screw connection -- thread and nut -- lives in one place for all three
@@ -320,9 +344,10 @@ module body() {
             cylinder(h = floor_t + 0.02, d1 = 2 * outlet_r, d2 = 2 * outlet_r + 2 * floor_t);
         translate([outlet_x, 0, -neck_length - 0.01])                // cable lead-out
             cylinder(h = 2.7, d1 = 2 * outlet_r + 4.4, d2 = 2 * outlet_r - 1);
-        at_glue(-0.1, pipe_diameter + 0.8);                          // clear the cut pipe end
+        // The recess for the cut pipe end. It starts 0.1 mm proud of the glue
+        // face so the cut has no coincident face with it.
         translate([-0.1, 0, pipe_axis_z]) rotate([0, 90, 0])
-            cylinder(h = pipe_stub + 0.7, d = pipe_diameter + 0.8);
+            cylinder(h = pipe_recess + 0.1, d = pipe_diameter + pipe_recess_fit);
     }
 }
 

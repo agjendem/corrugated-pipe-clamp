@@ -451,6 +451,20 @@ The two changes are worth about the same, and they compound:
 Along the inlet the shell comes out at exactly **Ø40** — the conduit's own outside diameter,
 so it reads as the pipe carrying on, and it sits tangent to the back panel.
 
+## The screw, and the pipe's own end
+
+The threaded neck is `plate_thickness + stuss_depth` long — every millimetre of it is thread,
+so `stuss_depth` alone decides how many turns there are to run the nut down. At 9 mm it
+carries **11 mm of thread, 3.7 turns at 3 mm pitch**; the 6 mm nut takes 2 of them and the
+rest is there to reach through a panel thicker than the drawing's 2 mm. The turn count is
+echoed on every render.
+
+The glue face is counterbored **Ø42.8 × 2 mm deep** for the cut conduit end. Its depth is
+given outright rather than derived from `pipe_stub`, because a conduit is never cut as square
+as the drawing says and the flange has to bed on the *mount*, not on the pipe's ragged end.
+What is left behind it — 2 mm of the 4 mm glue plate — is the annular seat the pipe butts
+against, and an assert keeps it from being cut away.
+
 ## How it locates itself
 
 A lip wraps the flange's rim, along the **bottom** of the flange only, because that is where
@@ -472,7 +486,7 @@ under the ~50° an FDM printer manages unaided, so there is no support inside th
 which is where support is miserable to remove. The angle is echoed on every render with a
 warning past 50°.
 
-But the whole bottom face still floats 9 mm up on a Ø46 ring, and that costs **29.9 cm²** of
+But the whole bottom face still floats 11 mm up on a Ø46 ring, and that costs **29.9 cm²** of
 support. Rotate it onto its glue face instead (`rotate([0,-90,0])`, lip off) and the same
 part needs **8.3 cm²** — the same lesson as the elbow, and it applies to a part you have
 already printed.
