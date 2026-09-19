@@ -14,6 +14,18 @@
       "part": "print",
       "tube_len": "50"
     },
+    "panel_spigot_od495": {
+      "part": "body",
+      "tube_od": "49.5",
+      "collar_over": "2.5",
+      "collar_blend": "1.25"
+    },
+    "panel_spigot_od495_print": {
+      "part": "print",
+      "tube_od": "49.5",
+      "collar_over": "2.5",
+      "collar_blend": "1.25"
+    },
     "panel_spigot_thin": {
       "part": "body",
       "wall": "1"

@@ -542,6 +542,26 @@ Three things fix it, and none of them is a support setting:
 Both angles are derived, echoed on every render, and asserted: the model now refuses to
 export a spigot whose transition overhangs more than 40° from vertical.
 
+### A Ø49.5 tube, on the same screw
+
+`panel_spigot_od495` is the same part with the tube turned down half a millimetre, for when
+something has to slide over it or into it and Ø50 on Ø50 is no fit at all. **The screw is
+untouched** — same Ø49.2 crest, same 3 mm pitch, same 11 mm of neck, same nut. So is the
+collar: `collar_over` goes up by the same 0.5 mm, which keeps the collar at Ø52 and the ring
+it hangs on at 1 mm, exactly as on the Ø50.
+
+One thing does change in kind. At Ø50 the tube *cannot* pass the Ø50 hole and that was half
+the mechanism; at Ø49.5 it can, and only the collar stops it. Nothing hangs differently —
+the collar was always what the part bears on — but it is no longer impossible to push the
+part through a panel with no nut on it.
+
+`collar_blend` goes up to 1.25 with `collar_over`, and that matters: the chamfer is what
+reaches down to the tube, so leaving it at 1 would leave a 0.25 mm **flat** ring under the
+collar, which is a 0° overhang once the part is turned over. The ledge is echoed on every
+render now, because raising `collar_over` widens it without widening the chamfer.
+`panel_spigot_wide` leaves 1 mm of it on purpose — a short flat ring bridges off the tube's
+wall and carries itself, which is the documented `collar_blend = 0` case.
+
 ### Two nuts, and why you might want the narrow one
 
 The nut has always had two grips, and `nut_grip` picks between them. Above zero it grows

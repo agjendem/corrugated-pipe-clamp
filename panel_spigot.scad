@@ -189,6 +189,13 @@ root_slope  = atan(((tube_bore - outlet_bore) / 2) / root_cone);   // inside, at
 blend_slope = collar_blend <= 0 ? 0 : atan(collar_blend / collar_blend_h);  // outside, at the shoulder
 worst_slope = max(root_slope, blend_slope);
 
+// What the blend does NOT reach: a flat ring under the collar, and once the
+// part is turned over to print it is a flat overhang. A short one bridges off
+// the tube's wall and carries itself -- that is the documented `collar_blend = 0`
+// case -- but it is easy to leave one by accident, because raising collar_over
+// widens the ledge without widening the chamfer. So it is echoed.
+collar_ledge = collar_over / 2 - collar_blend;
+
 // ── Sanity checks ───────────────────────────────────────────────────────────
 assert(bearing_w > 0,
        str("collar_over ", collar_over, " does not reach past the Ø", hole_diameter,
@@ -266,7 +273,11 @@ echo(str("Printed standing on the tube's mouth, thread up: a Ø", stand_on, "/Ø
          " ring on the bed, ", mm1(PI / 4 * (pow(tube_od, 2) - pow(tube_bore, 2)) / 100),
          " cm2. Use a brim -- it is ", mm1(body_len), " mm tall on that ring."));
 echo(str("Overhang: ", mm1(worst_slope), " degrees from vertical at worst (", mm1(root_slope),
-         " inside at the root, ", mm1(blend_slope), " outside at the collar's shoulder). ",
+         " inside at the root, ", mm1(blend_slope), " outside at the collar's shoulder)",
+         collar_ledge > 0.05
+           ? str(", plus a flat ", mm1(collar_ledge),
+                 " mm ledge under the collar that the chamfer does not reach")
+           : ", and no flat ledge under the collar", ". ",
          "Nothing here needs support; what it needs is the tube not to wobble, so print ",
          "the ", wall, " mm wall as ", mm1(wall / 0.4), " lines of a 0.4 nozzle and slow the ",
          "last 5 mm before the collar."));
