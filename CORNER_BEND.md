@@ -356,7 +356,7 @@ The same bore takes it out, so the floor runs flat into the hole. **Only above t
 face**, though: below it the stuss is what the nut pulls on and what centres itself in the
 panel's Ø50 hole, and notching it there would spend a slice of its section to buy a
 millimetre of lead-in. From the bearing face down it is a complete ring, and the thread the
-nut actually engages — 2 to 8 mm below the panel — is never touched.
+nut actually engages — anywhere from 2 to 11 mm below the panel — is never touched.
 
 | Straight up at the underside: the bearing face is a C, open where the channel runs in |
 |:---:|
@@ -393,6 +393,26 @@ to compare.
 
 It costs 6.2 cm³ of the part's 50.7, and dropping the collar costs another 5.8. Both are
 choices you can back out of one number at a time.
+
+## The same neck, and the pipe's own end
+
+This part screws into the same hole in the same panel and is held by the same nut as the other
+two, so it carries the same two corrections.
+
+`stuss_depth` is **9 mm**, not 7. Every millimetre of the neck is thread, so
+`plate_thickness + stuss_depth` is the whole threaded length: **11 mm, 3.7 turns at 3 mm
+pitch**, of which the 6 mm nut takes 2. At 7 mm the neck did not reach far enough through the
+panel to take the nut properly. The turn count is derived and echoed on every render rather
+than left to be divided out.
+
+The recess in the glue face is **Ø42.8 × 2 mm deep**. It was Ø40.8 and `pipe_stub + 0.7` — a
+fudge factor on a measurement of how proud the pipe stands. It now has its own depth and its
+own clearance, for the reason given in [the chamber's chapter](#the-screw-and-the-pipes-own-end):
+a conduit is never cut as square as the drawing says. Two asserts replace the old indirect one
+— the recess must clear the stub, and what is left of `glue_t` behind it must still be a seat.
+
+Note that this is the **long-neck** part of the three in every other respect too: `plate_t` is
+6 mm rather than 4, so the stuss stands proud of a plate half again as thick.
 
 ## Presets
 
