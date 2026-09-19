@@ -492,16 +492,55 @@ Three things are worth knowing before you print one:
   it, all round, is what bears on the panel — 1 mm at the Ø52 default, and that assumes the
   hole is drilled at size. Drill it Ø51 and half the ring is gone. `panel_spigot_wide` gives
   it 2 mm. The figure is echoed on every render.
-- **The root of the tube is thickened from the inside.** A Ø50 × 1.5 mm tube standing 25 mm
-  proud is a cantilever and it breaks where it meets the collar. The bore has to step from
-  the tube's Ø47 down to the thread's Ø41 there anyway, so the step is a cone rather than a
-  shoulder: the fillet at the root and the funnel that keeps a cable off the edge, for free.
+- **The root of the tube is thickened from the inside.** A Ø50 tube standing 25 mm proud is
+  a cantilever and it breaks where it meets the collar. The bore has to step from the tube's
+  Ø46 down to the thread's Ø41 there anyway, so the step is a cone rather than a shoulder:
+  the fillet at the root and the funnel that keeps a cable off the edge, for free. How *long*
+  that cone is, though, is the whole part — see below.
 
-Printed standing on the tube's mouth with the thread pointing **up** — the best orientation a
-printed thread gets, and the only overhang left is the collar's 1 mm ledge. The footprint is
-a thin Ø50/Ø47 ring, about 2.3 cm², so give it a brim.
+Printed standing on the tube's mouth with the thread pointing **up**. That is the best
+orientation a printed thread gets, and it is also the only one on offer: turned over, the
+collar's bearing face becomes a 300 mm² flat ceiling and the part stands on the thread's Ø46
+tip. The footprint is a thin Ø50/Ø46 ring, about 3 cm², so give it a brim.
 
 ![Print layout](images/panel_spigot_print.png)
+
+### Why the first one failed, and what changed
+
+The first print of this part failed in the transition from the tube to the thread, and it
+kept failing with supports switched on. It was not a support problem — it was an angle
+problem, and measuring the exported mesh said so plainly:
+
+| | Then | Now |
+|---|---:|---:|
+| Root cone, inside (Ø46 → Ø41) | **45.0°** from vertical | **22.6°** |
+| Collar shoulder, outside (Ø50 → Ø52) | **45.0°** | **26.6°** |
+| Overhang area at 45° | **810 mm²** | **0** |
+| First-layer ring | 2.3 cm² | **3.0 cm²** |
+| Flat left at the thread's tip | 0.41 mm | **1.2 mm** |
+
+The root cone used to be exactly as tall as the collar — 3 mm to fall 3 mm of radius — and
+the collar's chamfer did the same 1 mm over 1 mm. So the *entire* transition, inside and out,
+was one continuous 45° surface, 810 mm² of it and by far the largest overhang in the part.
+45° is the angle that carries itself when everything else is right, and here nothing else
+was: the printer met it at the top of a free-standing shell 25 mm tall. Supports do not
+rescue it either, because a slicer measuring from horizontal sees 45° as *shallow* and
+generates nothing, and what it would generate has to grow 25 mm up the inside of a Ø46 bore.
+
+Three things fix it, and none of them is a support setting:
+
+- **`root_cone`** is the cone's own length, no longer tied to `collar_t`. At the default 6 mm
+  it crosses the 3 mm collar and climbs 3 mm on into the tube, which is both a gentler angle
+  and a longer fillet at the root of the cantilever.
+- **`wall` is 2 mm**, not 1.5. It helps twice: a thicker tube has a smaller bore, so the cone
+  has less radius to fall — and 2 mm is five lines of a 0.4 nozzle, where 1.5 mm was three
+  and a half, i.e. two perimeters and a ribbon of gap fill up the whole 25 mm shell.
+  `panel_spigot_stout` gives it 2.5 mm.
+- **`collar_blend` is taller than it is deep.** It gets all of `collar_t` bar the millimetre
+  of straight wall that keeps the bearing face flat, so the shoulder is 27° and not 45°.
+
+Both angles are derived, echoed on every render, and asserted: the model now refuses to
+export a spigot whose transition overhangs more than 40° from vertical.
 
 ### Two nuts, and why you might want the narrow one
 

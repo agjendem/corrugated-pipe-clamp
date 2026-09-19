@@ -18,6 +18,14 @@
       "part": "body",
       "wall": "1"
     },
+    "panel_spigot_stout": {
+      "part": "body",
+      "wall": "2.5"
+    },
+    "panel_spigot_stout_print": {
+      "part": "print",
+      "wall": "2.5"
+    },
     "panel_spigot_wide": {
       "part": "body",
       "collar_over": "4"

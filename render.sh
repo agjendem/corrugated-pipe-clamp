@@ -239,8 +239,9 @@ spigot_view panel_spigot_assembly 0,0,0,68,0,32,0 assembly
     --viewall --autocenter --camera=0,0,0,58,0,20,0 --colorscheme=Tomorrow \
     -p panel_spigot.json -P panel_spigot_nut_slim panel_spigot.scad
 
-# Cut in half: the 1.5 mm wall, the flat collar, and the cone through it that
-# is both the fillet at the tube's root and the funnel for the cable.
+# Cut in half: the 2 mm wall, the flat collar, and the root cone that climbs
+# out of it into the tube -- both the fillet at the tube's root and the funnel
+# for the cable, and the thing that keeps the transition off 45 degrees.
 "$OPENSCAD" -o "images/panel_spigot_split.png" --imgsize=1100,1200 \
     --viewall --autocenter --projection=o --camera=0,0,0,90,0,0,0 \
     --colorscheme=Tomorrow -D 'part="section"' panel_spigot.scad
