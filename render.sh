@@ -136,4 +136,29 @@ clear_view corner_elbow_clear_assembly 0,0,0,66,0,40,0  assembly
     --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
     --colorscheme=Tomorrow -D 'part="section"' corner_elbow_clear.scad
 
+# ── Panel spigot (the straight one) ─────────────────────────────────────────
+# All from the defaults in panel_spigot.scad. Auto-framed (--viewall).
+spigot_view() {  # out_name  camera  part
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1100,1200 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        -D "part=\"$3\"" panel_spigot.scad
+}
+
+spigot_view panel_spigot          0,0,0,62,0,32,0 body
+spigot_view panel_spigot_print    0,0,0,68,0,32,0 print   # as it goes on the bed
+spigot_view panel_spigot_assembly 0,0,0,68,0,32,0 assembly
+
+# Straight up at the underside: the flat bearing annulus, and how little of it
+# there is between the thread's crest and the collar's rim. This is the view
+# that shows what holds the part on.
+"$OPENSCAD" -o "images/panel_spigot_under.png" --imgsize=1100,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="body"' panel_spigot.scad
+
+# Cut in half: the 1.5 mm wall, the flat collar, and the cone through it that
+# is both the fillet at the tube's root and the funnel for the cable.
+"$OPENSCAD" -o "images/panel_spigot_split.png" --imgsize=1100,1200 \
+    --viewall --autocenter --projection=o --camera=0,0,0,90,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="section"' panel_spigot.scad
+
 echo "Rendered images/*.png"

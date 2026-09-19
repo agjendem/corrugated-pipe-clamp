@@ -1,0 +1,46 @@
+{
+  "parameterSets": {
+    "panel_spigot": {
+      "part": "body"
+    },
+    "panel_spigot_print": {
+      "part": "print"
+    },
+    "panel_spigot_50": {
+      "part": "body",
+      "tube_len": "50"
+    },
+    "panel_spigot_50_print": {
+      "part": "print",
+      "tube_len": "50"
+    },
+    "panel_spigot_thin": {
+      "part": "body",
+      "wall": "1"
+    },
+    "panel_spigot_wide": {
+      "part": "body",
+      "collar_over": "4"
+    },
+    "panel_spigot_nut": {
+      "part": "nut"
+    },
+    "panel_spigot_nut_wide": {
+      "part": "nut",
+      "nut_flange": "13"
+    },
+    "panel_spigot_hole60": {
+      "part": "body",
+      "hole_diameter": "60",
+      "tube_od": "60",
+      "outlet_bore": "50"
+    },
+    "panel_spigot_nut_hole60": {
+      "part": "nut",
+      "hole_diameter": "60",
+      "tube_od": "60",
+      "outlet_bore": "50"
+    }
+  },
+  "fileFormatVersion": "1"
+}

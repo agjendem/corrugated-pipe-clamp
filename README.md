@@ -198,6 +198,61 @@ the flange of a printed `conduit_40mm_mount` and are sized entirely off that pre
 Narrow, one-off sorts of part — the full story, and which to pick, is in
 **[CORNER_BEND.md](CORNER_BEND.md)**.
 
+## Addon: panel spigot
+
+[`panel_spigot.scad`](panel_spigot.scad) is the straight one: a length of Ø50 tube standing
+off the panel, held through the **same Ø50 hole, by the same thread and the same nut** as the
+corner parts. No turn, no glue face, nothing to line up.
+
+![Panel spigot](images/panel_spigot.png)
+
+The tube cannot go through the hole — it is Ø50 and so is the hole. Only the thread, at a
+Ø49.2 crest, passes. That is the mechanism rather than a compromise: the collar caught
+between the two is what the part hangs on, and the nut pulls the panel up against it from
+inside.
+
+| In the panel, nut underneath | The ring it hangs on | The wall, the collar, the cone |
+|:---:|:---:|:---:|
+| ![Assembly](images/panel_spigot_assembly.png) | ![Underside](images/panel_spigot_under.png) | ![Section](images/panel_spigot_split.png) |
+
+Three things are worth knowing before you print one:
+
+- **The collar is flat underneath, always.** Whatever is done for strength happens on the
+  tube side or inside the bore. Chamfer the face that meets the panel and the part rocks on
+  the chamfer instead of bedding on the panel.
+- **That ring is 1 mm wide.** `collar_over` is the collar's Ø *over the tube's*, so half of
+  it, all round, is what bears on the panel — 1 mm at the Ø52 default, and that assumes the
+  hole is drilled at size. Drill it Ø51 and half the ring is gone. `panel_spigot_wide` gives
+  it 2 mm. The figure is echoed on every render.
+- **The root of the tube is thickened from the inside.** A Ø50 × 1.5 mm tube standing 25 mm
+  proud is a cantilever and it breaks where it meets the collar. The bore has to step from
+  the tube's Ø47 down to the thread's Ø41 there anyway, so the step is a cone rather than a
+  shoulder: the fillet at the root and the funnel that keeps a cable off the edge, for free.
+
+Printed standing on the tube's mouth with the thread pointing **up** — the best orientation a
+printed thread gets, and the only overhang left is the collar's 1 mm ledge. The footprint is
+a thin Ø50/Ø47 ring, about 2.3 cm², so give it a brim.
+
+![Print layout](images/panel_spigot_print.png)
+
+### Presets
+
+Named parameter sets live in [`panel_spigot.json`](panel_spigot.json):
+
+| Preset | What it builds |
+|---|---|
+| `panel_spigot` | **the default: Ø50 × 1.5 mm wall, 25 mm of tube** |
+| `panel_spigot_print` | the same, laid out for the bed |
+| `panel_spigot_50`, `panel_spigot_50_print` | 50 mm of tube instead of 25 |
+| `panel_spigot_thin` | a 1 mm wall — a duct, not something to lean on |
+| `panel_spigot_wide` | `collar_over` 4, so the ring it hangs on is 2 mm |
+| `panel_spigot_nut`, `panel_spigot_nut_wide` | the fin-grip nut, and the flanged one |
+| `panel_spigot_hole60`, `panel_spigot_nut_hole60` | a Ø60 hole, with the tube grown to match |
+
+```sh
+openscad -o panel_spigot.stl -p panel_spigot.json -P panel_spigot panel_spigot.scad
+```
+
 ## Requirements
 
 - OpenSCAD (developed/verified with the 2026.04 snapshot/nightly build).
