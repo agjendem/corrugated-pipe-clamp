@@ -54,6 +54,81 @@ mount_view conduit_40mm_mount        0,0,0,55,0,-65,0   # main 3/4 view
 mount_view conduit_40mm_mount_top    0,0,0,0,0,-90,0    # straight down the bore
 mount_view conduit_40mm_mount_flange 0,0,0,118,0,25,0   # flange end from below
 
+# The same clamp with a screw brim: anchored to a stud rather than caught on the
+# hole, which holds the pipe BOTH ways. From the head side.
+"$OPENSCAD" -o "images/conduit_16mm_stud2.png" --imgsize=1000,1000 \
+    --viewall --autocenter --camera=0,0,0,125,0,205,0 --colorscheme=Tomorrow \
+    -p pipe_clamp.json -P conduit_16mm_stud2 pipe_clamp.scad
+
+# ── Snap collar (addon) ─────────────────────────────────────────────────────
+# All from the defaults in snap_collar.scad. Auto-framed (--viewall).
+collar_view() {  # out_name  camera  part
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1000,1000 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        -D "part=\"$3\"" snap_collar.scad
+}
+
+collar_view snap_collar          0,0,0,62,0,215,0 body      # main 3/4 view
+collar_view snap_collar_flange   0,0,0,118,0,215,0 body     # flange end, from below
+collar_view snap_collar_assembly 0,0,0,68,0,215,0 assembly  # in the panel, on the pipe
+
+# Straight down the bore: the mouth, and how far past the equator it wraps.
+# This is the view that shows what the part is.
+"$OPENSCAD" -o "images/snap_collar_mouth.png" --imgsize=1000,1000 \
+    --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
+    --colorscheme=Tomorrow snap_collar.scad
+
+# Cut in half: the three teeth, and the fillet where the skirt meets the flange.
+"$OPENSCAD" -o "images/snap_collar_split.png" --imgsize=1400,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,90,0,180,0 \
+    --colorscheme=Tomorrow -D 'part="section"' snap_collar.scad
+
+# The screw brim: the same collar, anchored to a stud instead of trusting the
+# hole. One screw opposite the mouth, or two, one each side. Shown from the SKIRT
+# side, which on this part is where the heads are -- it is fitted the other way
+# up from pipe_clamp, so the flat face underneath is the one that bears.
+stud_view() {  # out_name  preset  camera
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1000,1000 \
+        --viewall --autocenter --camera="$3" --colorscheme=Tomorrow \
+        -p snap_collar.json -P "$2" snap_collar.scad
+}
+
+stud_view snap_collar_stud1 snap_collar_16mm_stud1 0,0,0,58,0,215,0
+stud_view snap_collar_stud2 snap_collar_16mm_stud2 0,0,0,58,0,215,0
+
+# Dimensioned drawing. snap_collar_dimensions.scad picks the parameters up via
+# include <snap_collar.scad>, so it renders from the defaults, not from -P.
+"$OPENSCAD" -o "images/snap_collar_dimensions.png" --imgsize=1700,1100 \
+    --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
+    --colorscheme=Tomorrow snap_collar_dimensions.scad
+
+# ── Snap collar, 20 mm: the pointed tooth ───────────────────────────────────
+# The measured 20 mm conduit has a groove that closes from ~1.0 mm at the crest
+# to ~0.35 at the root, so the tooth is a wedge, not a square rib. Same repeat
+# as mount_params above: these mirror the snap_collar_20mm preset and have to be
+# written out because -P does not reach the dimensions file's included values.
+collar20_params=(
+    -D pipe_diameter=20 -D valley_diameter=17 -D corr_pitch=3.83
+    -D valley_width=1.03 -D valley_root_width=0.35 -D tooth_bite=1.0
+    -D corr_round=0.15 -D pipe_bore=14 -D panel_hole=25 -D flange_diameter=34
+)
+
+collar20_view() {  # out_name  camera  part
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1000,1000 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        "${collar20_params[@]}" -D "part=\"$3\"" snap_collar.scad
+}
+
+collar20_view snap_collar_20mm          0,0,0,62,0,215,0 body
+# Cut in half: this is the one to look at. The teeth are wedges following the
+# groove's own walls, and they stop 0.5 mm short of the root on purpose.
+collar20_view snap_collar_20mm_split    0,0,0,90,0,180,0 section
+collar20_view snap_collar_20mm_assembly 0,0,0,68,0,215,0 assembly
+
+"$OPENSCAD" -o "images/snap_collar_20mm_dimensions.png" --imgsize=1700,1100 \
+    --projection=o --viewall --autocenter --camera=0,0,0,0,0,0,0 \
+    --colorscheme=Tomorrow "${collar20_params[@]}" snap_collar_dimensions.scad
+
 # ── Corner bend (addon) ─────────────────────────────────────────────────────
 # All from the defaults in corner_bend.scad. Auto-framed (--viewall).
 corner_view() {  # out_name  camera  part

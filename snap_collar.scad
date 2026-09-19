@@ -1,0 +1,530 @@
+// ============================================================================
+//  snap_collar.scad -- strain relief where conduit enters a cabinet wall
+// ----------------------------------------------------------------------------
+//  A 16 mm corrugated conduit comes through a drilled hole in the side of a
+//  low-voltage / data cabinet ("svakstrømsskap"). Nothing holds it: it is not
+//  fixed in the wall and cannot be, so it can slide back out of the cabinet and
+//  disappear into the cavity. This is the part that stops it.
+//
+//  It is NOT pipe_clamp.scad. That one's outer diameter IS the wall hole, so the
+//  pipe has to be threaded through the hole before the clamp goes on. Here the
+//  pipe is already in place, so this one clips on SIDEWAYS -- a C of
+//  coverage_deg, snapped over the pipe and down into its grooves.
+//
+//      <- in the cabinet | panel | in the wall ->
+//      __________________|_______|_________________
+//     |     flange       | skirt |                 |
+//     |     Ø28          | Ø19.6 |                 |
+//     |__________________|__ ##__|_##____##________|   teeth, in the grooves
+//     - - - - - - - - - - - - - - - - - - - - - - -    centreline
+//     |      2 mm        |  2 mm |     7,4 mm      |
+//
+//  TWO THINGS HOLD IT, and neither is a screw:
+//
+//  1. The load seats it. The pipe pulls OUTWARD; the teeth hand that load to the
+//     collar; the collar's flange lies against the INSIDE face of the panel.
+//     The very force we are resisting is what presses the part home. Inward is
+//     harmless. So nothing has to latch, and everything except the flange can
+//     live in the hole and out in the wall -- 2 mm of build height inside the
+//     cabinet, which is all the room there is.
+//
+//  2. The hole locks the C shut. To clip over the pipe the arms must spread
+//     spread_needed (1.77 mm at the defaults). Once the skirt is in the hole
+//     they have hole_slack (0.9 mm) to move in. The collar cannot let go of the
+//     pipe without first leaving the hole, and it cannot leave the hole while
+//     the pipe is pulling it against the panel. That ratio is asserted below:
+//     it is the whole design in one number.
+//
+//  To remove it: push the pipe further in (harmless), pull the collar out of the
+//  hole, then unclip it.
+//
+//  All dimensions are in millimetres.
+//
+//  THE GROOVE IS NOT A SLOT. On the 16 mm pipe measured here it is near enough
+//  square to model as one, but the 20 mm pipe's groove is a U tending towards a
+//  V: about 1.0 mm across where it opens at the crest and roughly a third of
+//  that at the root. A square tooth cut to the mouth width lands on the flanks
+//  at the very top and stops -- it looks like a tooth in the render and grips
+//  like a bump on the pipe. So the tooth tapers with the groove (tooth_bite says
+//  how deep it goes, valley_root_width says how fast the walls close in) and it
+//  beds against both flanks the whole way down.
+//
+//  The price is that a sloped face is a wedge. Pull the pipe and some fraction
+//  of the pull -- tan of the flank angle, reported below -- tries to cam the
+//  teeth back out of the grooves and spread the C. Which the hole was already
+//  there to prevent. Point 2 above is doing two jobs on this pipe, not one.
+//
+//  Conduit standard (IEC/EN 61386): the nominal size is the outer (crest) Ø --
+//  16, 20, 25, 32, 40, 50, 63 mm. The standard does NOT fix the corrugation
+//  depth or pitch, and the two projects here measured two different "16 mm"
+//  pipes (15.8/13.0/3.79 here, 16.0/14.0/3.372 in corrugated-pipe-bend).
+//  MEASURE YOURS. Print the snap_collar_16mm_fittest preset first.
+// ============================================================================
+
+/* [Part] */
+part = "body";  // [body:the collar, section:cutaway, assembly:in the panel, pipe:a test length of conduit, fit:interference check -- must render EMPTY]
+
+/* [Conduit -- MEASURE YOURS] */
+pipe_diameter   = 15.8; // crest (outer) Ø of the conduit (mm)
+valley_diameter = 13.0; // groove (root) Ø of the conduit (mm)
+corr_pitch      = 3.79; // one corrugation period along the axis (mm)
+valley_width    = 1.2;  // axial width of one groove AT THE CREST, i.e. where it
+                        // opens. Easiest read: pitch minus the crest width (mm)
+valley_root_width = 0;  // axial width of the same groove at its ROOT, down on
+                        // valley_diameter (mm). 0 says the groove is square --
+                        // true enough of the 16 mm pipe, not of the 20 mm one,
+                        // whose walls close from ~1.0 to ~0.35
+pipe_bore       = 11;   // the conduit's own bore (mm). Only the modelled pipe
+                        // reads it -- part = pipe / assembly / fit -- but get it
+                        // right before printing the stub: bore against root Ø is
+                        // the wall, and the wall is the whole difference between
+                        // conduit that gives under the collar and conduit that
+                        // does not. The measured 20 mm pipe is 14, so 1.5 mm of
+                        // wall at the groove roots: it does not give.
+corr_round      = 0.3;  // fillet on the convex tooth TIPS (mm)
+groove_fillet   = 0.6;  // fillet in the concave groove bottoms (mm); this is the
+                        // printed tooth-underside overhang, so bigger prints cleaner
+
+/* [Fits] */
+pipe_clearance   = 0.4; // diametral, bore over the pipe's crests (mm)
+bottom_clearance = 0.4; // diametral, tooth tip against the groove root (mm)
+tooth_bite       = 0;   // how far the tooth reaches in below the crest Ø (mm).
+                        // 0 = all the way down, until bottom_clearance stops it,
+                        // which is what a square groove wants. In a V you stop
+                        // early on purpose: go deeper and the tooth gets thinner
+                        // and weaker for a gain in grip that is already plenty
+tooth_side_play  = 0.2; // axial, tooth inside the groove -- held all the way
+                        // down the flanks, not just at the mouth (mm)
+skirt_clearance  = 0.4; // diametral, skirt inside the drilled hole (mm)
+hole_tolerance   = 0.5; // how far over nominal a drilled hole may come out (mm)
+
+/* [Cabinet panel] */
+panel_hole      = 20;   // RECOMMENDED drill Ø -- see the report below (mm)
+panel_thickness = 2;    // the cabinet wall (mm)
+
+/* [Collar] */
+coverage_deg = 240;     // [235:5:285] degrees of pipe wrapped -- sets the snap.
+                        // The window is narrow and the two asserts below define
+                        // its real ends: too little and the collar neither holds
+                        // the pipe nor gets locked by the hole, too much and
+                        // there is no mouth left to get the pipe in.
+tooth_count  = 3;       // corrugations gripped -> also sets the length
+mouth_lead   = 0.6;     // lead-in radius on the arm tips (mm); 0 = square lip
+
+/* [Flange (bears on the inside of the panel)] */
+flange_diameter  = 28;  // must cover the hole with a ring to spare (mm)
+flange_thickness = 2;   // the ONLY thing that builds into the cabinet (mm)
+
+/* [Screw brim -- anchor to a stud instead of trusting the hole] */
+screw_count   = 0;      // [0:none, 1:one, dead opposite the mouth, 2:one each side, 3:three]
+screw_pcd     = 31;     // circle the screw centres sit on (mm)
+screw_spread  = 90;     // degrees either side of centre (ignored when count = 1)
+screw_d       = 4.0;    // clearance hole for a 3.5 mm gipsskrue (mm)
+screw_head_d  = 8.0;    // its bugle head (mm)
+screw_cs_angle = 90;    // included angle of the countersink (deg)
+screw_head_at_skirt = true; // head on the face the SKIRT rises from -- this part
+                        // is fitted the other way up from pipe_clamp, which has
+                        // its heads on the flange's outer face. Set false to
+                        // match pipe_clamp.
+// With the defaults the cone is exactly 2 mm deep -- the whole brim. That is
+// how a countersunk hole in thin material works: the cone is the bearing face.
+// Widen flange_diameter to suit; the asserts below say by how much.
+
+/* [Render quality] */
+$fn = 96;
+
+// ── Derived ─────────────────────────────────────────────────────────────────
+r_crest   = pipe_diameter   / 2;                    // the pipe, at a crest
+r_valley  = valley_diameter / 2;                    // the pipe, at a groove
+r_recess  = r_crest  + pipe_clearance   / 2;        // our bore, clearing a crest
+r_skirt   = (panel_hole - skirt_clearance) / 2;     // our OD, filling the hole
+r_flange  = flange_diameter / 2;
+
+// How deep the tooth goes. Left at 0 it dives for the root and bottom_clearance
+// decides, as it always did. Set it and you are saying "stop here", which is the
+// only sensible thing to say about a groove that closes to nothing.
+r_tooth   = tooth_bite > 0 ? r_crest - tooth_bite
+                           : r_valley + bottom_clearance / 2;
+corr_depth = r_recess - r_tooth;                    // how far a tooth reaches in
+
+// The groove's width as a function of radius, and the tooth cut from it. Both
+// ends of the tooth come off the same straight line -- the groove's own flank,
+// stepped back tooth_side_play/2 -- so the clearance is that, and only that, at
+// every depth. The base is read out at r_recess, past the crest and so
+// extrapolated, which is harmless: there is no pipe out there to hit.
+groove_tip_w = valley_root_width > 0 ? valley_root_width : valley_width;
+function groove_w(r) = corr_taper_width(r, r_valley, r_crest,
+                                        groove_tip_w, valley_width);
+tooth_w     = groove_w(r_recess) - tooth_side_play; // tooth at its base
+tooth_tip_w = groove_w(r_tooth)  - tooth_side_play; // tooth at its tip
+tooth_taper = (tooth_w - tooth_tip_w) / 2;          // axial run of one flank
+
+// The wedge. A square tooth hands the pull straight to the collar; a tapered one
+// hands over part of it as a push outwards, trying to climb out of the groove.
+flank_deg = atan(tooth_taper / corr_depth);         // off square, in the (r,z) plane
+cam_out   = tan(flank_deg);                         // of the pull, radially
+
+recess_w  = corr_pitch - tooth_w;                   // recess, axially
+length    = corr_length(tooth_count, recess_w, tooth_w);
+skirt_wall = r_skirt - r_recess;                    // thinnest gods, over a crest
+
+// The snap, in chords across the mouth. The arms have to let two things past:
+// the pipe's crests must clear the recess walls, and its grooves must clear the
+// tooth tips. Whichever needs more spread is the one you feel when you clip it
+// on; the tooth one is also what holds the collar on the pipe afterwards.
+half_gap     = (360 - coverage_deg) / 2;
+chord_tooth  = 2 * r_tooth  * sin(half_gap);
+chord_recess = 2 * r_recess * sin(half_gap);
+snap_overlap  = valley_diameter - chord_tooth;      // sideways hold, diametral
+spread_needed = max(pipe_diameter - chord_recess, snap_overlap);
+hole_slack    = skirt_clearance + hole_tolerance;   // room to spread, in the hole
+lock_ratio    = spread_needed / hole_slack;
+
+// What clipping it on costs the material. Each arm is treated as a straight
+// cantilever of the collar's thinnest wall, bent half the spread over its own
+// arc -- crude for a curved beam, right to well within the order of magnitude,
+// and it is the number that picks the filament.
+//
+// The pipe is taken as RIGID, and on thick-walled conduit that is simply true:
+// it will not squash out of the way, so every millimetre of spread is the
+// collar's to find. Assuming otherwise would only flatter the answer.
+arm_arc     = coverage_deg / 2 / 360 * 2 * PI * (r_recess + r_skirt) / 2;
+clip_strain = 3 * skirt_wall * (spread_needed / 2) / (2 * pow(arm_arc, 2));
+
+inside = flange_thickness;                          // build height in the cabinet
+flange_bearing = PI / 4 * (pow(flange_diameter, 2) - pow(panel_hole, 2))
+                 * coverage_deg / 360;
+tooth_bearing  = tooth_count * PI * (pow(r_crest, 2) - pow(r_tooth, 2))
+                 * coverage_deg / 360;
+
+// How far the skirt actually sits inside the hole. With a 2 mm cabinet panel it
+// is the panel; with a 45 mm stud bored through it is however much skirt there
+// is. Either way this is what the hole has to grip to lock the C.
+engagement = min(panel_thickness, length - flange_thickness);
+
+// The corrugation profile and its two fillets, shared with pipe_clamp.scad.
+include <corrugation.scad>
+// Countersunk screw holes in the brim, shared with pipe_clamp.scad.
+include <brim.scad>
+
+function mm1(x) = round(x * 10) / 10;
+function mm2(x) = round(x * 100) / 100;
+
+// ── Sanity checks ───────────────────────────────────────────────────────────
+assert(valley_diameter < pipe_diameter,
+       str("valley_diameter ", valley_diameter, " must be under the crest Ø ",
+           pipe_diameter, " -- they are the groove root and the outside"));
+assert(valley_width < corr_pitch,
+       str("valley_width ", valley_width, " must be under the pitch ", corr_pitch));
+assert(valley_root_width == 0 || valley_root_width < valley_width,
+       str("valley_root_width ", valley_root_width, " is the groove's width at ",
+           "the ROOT and must be under its width at the mouth, ", valley_width,
+           ". Use 0 to say the groove is square-bottomed"));
+assert(tooth_w > 0.4,
+       str("tooth ", mm2(tooth_w), " mm wide is too thin to print or to hold -- ",
+           "measure valley_width again, or cut tooth_side_play"));
+assert(r_tooth >= r_valley + bottom_clearance / 2,
+       str("the tooth reaches r ", mm2(r_tooth), " but the groove root is at r ",
+           mm2(r_valley), " and wants ", mm2(bottom_clearance / 2),
+           " mm under it. Cut tooth_bite to ",
+           mm2(r_crest - r_valley - bottom_clearance / 2), " or less"));
+assert(corr_depth > 0.3,
+       str("the tooth only reaches ", mm2(corr_depth), " mm in from the bore -- ",
+           "raise tooth_bite past pipe_clearance/2 = ", mm2(pipe_clearance / 2)));
+assert(tooth_tip_w >= 0.3,
+       str("the tooth tip comes out ", mm2(tooth_tip_w), " mm wide -- too pointed ",
+           "to print or to bear on. Stop the tooth higher up the V by cutting ",
+           "tooth_bite (it reaches r ", mm2(r_tooth), ", the crest is r ",
+           mm2(r_crest), "), or cut tooth_side_play"));
+assert(r_tooth > 0, "bottom_clearance leaves no tooth");
+assert(coverage_deg > 180,
+       str("coverage_deg ", coverage_deg, " does not pass the equator, so the ",
+           "collar cannot clip on at all"));
+assert(coverage_deg < 300,
+       str("coverage_deg ", coverage_deg, " leaves no mouth to get the pipe in"));
+assert(snap_overlap >= 0.6,
+       str("sideways hold is only ", mm2(snap_overlap), " mm -- the collar would ",
+           "fall off the pipe. Raise coverage_deg (it is ", coverage_deg, ")"));
+
+// The design, as one assertion: spreading the C must be harder than the hole
+// allows, by a clear margin, or the collar can open while it is seated.
+assert(spread_needed >= 1.5 * hole_slack,
+       str("the hole does not lock the collar: it must spread ",
+           mm2(spread_needed), " mm to release the pipe but has ",
+           mm2(hole_slack), " mm of room in the hole. Raise coverage_deg, or ",
+           "tighten skirt_clearance / hole_tolerance"));
+
+assert(skirt_wall >= 1.2,
+       str("only ", mm2(skirt_wall), " mm of skirt over the crests -- drill at ",
+           "least Ø", mm1(pipe_diameter + pipe_clearance + 2 * 1.2 + skirt_clearance),
+           " (panel_hole is ", panel_hole, ")"));
+assert(flange_diameter >= panel_hole + 6,
+       str("flange Ø", flange_diameter, " leaves under 3 mm of bearing ring ",
+           "around a Ø", panel_hole, " hole"));
+// Not "the teeth must reach past the wall" -- that is the wrong question once
+// the thing being bored is a 45 mm stud rather than a 2 mm panel. What matters
+// either way is that enough skirt sits inside the hole for the hole to hold the
+// C shut.
+// panel_thickness = 0 means there is no panel at all -- a bare fit-test clip, or
+// one screwed down where nothing is bored for the skirt to enter. Then there is
+// no hole to lock the C and the snap is on its own, which is what the
+// snap_overlap assert above is for.
+assert(panel_thickness == 0 || engagement >= 1.5,
+       str("only ", mm2(engagement), " mm of skirt sits in the hole, so the hole ",
+           "cannot lock the C. Raise tooth_count (the collar is ", mm2(length),
+           " mm long and the flange takes ", flange_thickness, ")"));
+assert(mouth_lead < r_tooth / 2,
+       str("mouth_lead ", mouth_lead, " would eat the arm tips"));
+assert(pipe_bore < valley_diameter,
+       str("pipe_bore Ø", pipe_bore, " is not under the groove root Ø",
+           valley_diameter, ", so the modelled conduit has no wall left at its ",
+           "grooves and part = pipe renders hollow. Nothing about the collar ",
+           "itself depends on this number"));
+
+// tooth_tip_w, not tooth_w: it is the tip the opening pass can rub out.
+for (c = corr_fillet_checks(corr_round, groove_fillet, corr_depth,
+                            recess_w, tooth_w, tooth_tip_w))
+    assert(c[0], c[1]);
+
+for (c = brim_checks(screw_count, screw_pcd, screw_spread, screw_d, screw_head_d,
+                     screw_cs_angle, flange_thickness,
+                     r_skirt + groove_fillet, r_flange, coverage_deg / 2))
+    assert(c[0], c[1]);
+
+// ── Report ──────────────────────────────────────────────────────────────────
+echo(str("Drill the panel: Ø", panel_hole, " (skirt Ø", mm2(2 * r_skirt),
+         ", ", mm2(skirt_wall), " mm of gods over the crests)"));
+echo(str("Build height inside the cabinet: ", mm2(inside),
+         " mm  (the flange, and nothing else)"));
+echo(str("Overall length: ", mm2(length), " mm -- ", mm2(inside), " in, ",
+         panel_thickness, " in the panel, ",
+         mm2(length - inside - panel_thickness), " out in the wall"));
+echo(str("Collar Ø", mm2(2 * r_skirt), ", flange Ø", flange_diameter,
+         ", bore Ø", mm2(2 * r_recess), " over crests / Ø", mm2(2 * r_tooth),
+         " at the teeth"));
+echo(str("Clip-on spread: ", mm2(spread_needed), " mm  (crest past the recess ",
+         "walls ", mm2(pipe_diameter - chord_recess), ", groove past the tooth ",
+         "tips ", mm2(snap_overlap), ")"));
+echo(str("Sideways hold on the pipe: ", mm2(snap_overlap), " mm diametral"));
+echo(str("LOCK: needs ", mm2(spread_needed), " mm to open, has ",
+         mm2(hole_slack), " mm in the hole -> ", mm2(lock_ratio), "x"));
+echo(str("Clip-on strain, roughly ", mm1(clip_strain * 100), "%: each arm bends ",
+         mm2(spread_needed / 2), " mm over ", mm1(arm_arc), " mm of arc in ",
+         mm2(skirt_wall), " mm of wall, the pipe giving nothing back. PETG and ",
+         "ASA yield around 4%; PLA is nearer the edge and creeps under a ",
+         "standing load"));
+echo(str("Bearing area, flange on panel: ", mm1(flange_bearing), " mm^2"));
+echo(str("Bearing area, ", tooth_count, " teeth on the crests: ",
+         mm1(tooth_bearing), " mm^2"));
+echo(str("Teeth grip ", tooth_count, " corrugations over ", mm2(length), " mm"));
+echo(str("Tooth: ", mm2(tooth_w), " mm at the base, ", mm2(tooth_tip_w),
+         " at the tip, ", mm2(r_crest - r_tooth), " mm in past the crest",
+         tooth_bite > 0 ? str(" (tooth_bite, stopping ",
+                              mm2(r_tooth - r_valley), " mm clear of the root)")
+                        : " (down to the root)"));
+if (tooth_taper > 0.001)
+    echo(str("  flanks ", mm1(flank_deg), " deg off square, on the groove's own ",
+             "slope -- so a pull cams ", mm1(cam_out * 100),
+             "% of itself outwards, and the hole lock above takes that too"));
+// Every tooth after the first is betting on the pitch. The teeth are cut at
+// corr_pitch and the pipe's are not, quite, so the error piles up along the run
+// and the outermost tooth is the one that runs out of play first.
+if (tooth_count > 1)
+    echo(str("Pitch has to be right to ", mm2(tooth_side_play / (tooth_count - 1)),
+             " mm per corrugation, counting out from the middle tooth -- so ",
+             "measure over several and divide (", tooth_count, " x ", corr_pitch,
+             " = ", mm2(corr_pitch * tooth_count), " mm of pipe)",
+             tooth_taper > 0.001
+               ? ". A tapered tooth is forgiving here: off-pitch it seats less deep"
+               : ". A square tooth is not forgiving here: off-pitch it jams"));
+echo(panel_thickness == 0
+     ? "No panel: nothing bored for the skirt, so the snap alone holds the C shut"
+     : str("Skirt sits ", mm2(engagement), " mm into the hole"));
+if (screw_count > 0) {
+    echo(str("Screw brim: ", screw_count, " x Ø", screw_d, " on a Ø", screw_pcd,
+             " circle, ", screw_cs_angle, "° countersink ",
+             mm2(brim_cs_depth(screw_head_d, screw_d, screw_cs_angle)),
+             " mm deep in a ", flange_thickness, " mm brim"));
+    echo(str("  head is countersunk into the ",
+             screw_head_at_skirt ? "SKIRT side (z = " : "outer face (z = ",
+             screw_head_at_skirt ? flange_thickness : 0,
+             ") -- the flange bears on the other face"));
+    echo(str("  head Ø", screw_head_d, " sits between r ",
+             mm2(screw_pcd / 2 - screw_head_d / 2), " and r ",
+             mm2(screw_pcd / 2 + screw_head_d / 2), "; body out to r ",
+             mm2(r_skirt + groove_fillet), ", brim edge r ", mm2(r_flange)));
+    echo("  Screwed down, the pipe is held BOTH ways -- not just from pulling out.");
+}
+
+// ====  THE PART  ============================================================
+//  Cross-section in the (radius, axial-z) plane, revolved through coverage_deg.
+//  z = 0 is the cabinet-side face of the flange; +z runs out into the wall.
+//  The bore is the shared corrugation wave; what is local to this part is how
+//  the section is CLOSED on the outside -- a flange, then a constant-Ø skirt.
+inner = corr_inner(r_recess, r_tooth, tooth_count, recess_w, tooth_w,
+                   tip_w = tooth_tip_w);
+
+profile = concat(inner, [
+    [r_skirt,  length],             // out to the skirt at the far end
+    [r_skirt,  flange_thickness],   // down the skirt to the flange
+    [r_flange, flange_thickness],   // out across the top of the flange
+    [r_flange, 0]                   // down the flange rim; polygon closes home
+]);
+
+module section_2d() {
+    corr_soften(corr_round, groove_fillet) polygon(points = profile);
+}
+
+module collar_raw() {
+    rotate_extrude(angle = coverage_deg, convexity = 6) section_2d();
+}
+
+// Rounds the edge where the mouth face meets the tooth tips, so a pipe pushed
+// at the mouth cams the arms open instead of butting into a square lip. The
+// tooth tips are the innermost thing on the arm and so the first thing the pipe
+// touches; the recess walls sit corr_depth further out and meet the pipe's own
+// rounded crest, which cams by itself.
+//
+// A convex edge is rounded by removing the corner MINUS a rod laid in it -- not
+// the rod, which would just drill a hole tangent to both faces.
+module mouth_fillet() {
+    R  = mouth_lead;
+    cx = sqrt(pow(r_tooth + R, 2) - R * R);   // rod axis: R off both faces
+    difference() {
+        intersection() {                                   // the square corner
+            translate([0, 0, -1]) cylinder(h = length + 2, r = r_tooth + R);
+            // Reaching 1 mm PAST the mouth plane, not stopping dead on it. The
+            // extrusion's own start face lies at y = 0 and the arc is empty
+            // below it at these x, so the overshoot cuts nothing -- but a
+            // subtrahend that ends exactly on the face it is cutting leaves
+            // slivers, and here they came out as loose 0.06 mm flecks sitting
+            // on the tooth tips, four separate shells hanging off the part.
+            translate([0, -1, -1])
+                cube([r_tooth + R + 1, R + 1, length + 2]);
+        }
+        translate([cx, R, -2])                             // the rod in it
+            cylinder(h = length + 4, r = R, $fn = 24);
+    }
+}
+
+module mouth_lead_cuts() {
+    if (mouth_lead > 0) {
+        mouth_fillet();                                    // the theta = 0 arm
+        rotate([0, 0, coverage_deg]) mirror([0, 1, 0])     // the far arm
+            mouth_fillet();
+    }
+}
+
+// Turned so the mouth straddles -X: the part is symmetric about the X axis,
+// which is what every view and the section below assume.
+module body() {
+    difference() {
+        rotate([0, 0, -coverage_deg / 2])
+            difference() {
+                collar_raw();
+                mouth_lead_cuts();
+            }
+        // Cut after the rotation, so a screw angle is measured from the middle
+        // of the material -- which is where one screw has to go anyway.
+        brim_screw_cuts(screw_count, screw_pcd, screw_spread, screw_d,
+                        screw_head_d, screw_cs_angle, flange_thickness,
+                        screw_head_at_skirt);
+    }
+}
+
+module body_section() {
+    intersection() {
+        body();
+        translate([-50, -100, -1]) cube([100, 100, length + 2]);
+    }
+}
+
+// ====  THE CONDUIT  =========================================================
+//  A real corrugated pipe, not a smooth cylinder -- the same wave, run with the
+//  PIPE's own duty cycle (crest wide, groove narrow) instead of ours. Exportable
+//  as part = "pipe": a stub to test the clip on if you have no offcut handy.
+pipe_crest_w = corr_pitch - valley_width;
+pipe_n       = tooth_count + 6;
+
+// Tooth and groove are both symmetric about their own middles, so centring one
+// in the other is all the alignment there is. The offset is half of whatever the
+// tooth gives away in width -- tooth_side_play when the groove is square, a
+// shade more when the base was extrapolated out to r_recess.
+pipe_z0      = (valley_width - tooth_w) / 2 - 3 * corr_pitch;
+
+// The pipe's groove is only valley_width (1.2 mm) wide, a third of the recesses
+// we cut for its crests, so it cannot take the same fillet: groove_fillet 0.6 is
+// exactly half of 1.2, the closing seals the grooves outright and the "pipe"
+// comes out a smooth tube that our teeth then crash into. Clamp it to the same
+// margin corrugation.scad asserts for our own recesses -- and measure that
+// margin at the groove's NARROWEST, which in a V is the root, not the mouth.
+pipe_fillet = min(groove_fillet, CORR_FILLET_MAX * groove_tip_w);
+
+module conduit(n = undef, z0 = undef) {
+    nn = is_undef(n)  ? pipe_n  : n;
+    zz = is_undef(z0) ? pipe_z0 : z0;
+    // Same call, roles swapped: for the pipe the crest is the rib and the groove
+    // is the tooth, so groove_tip_w is what tapers.
+    outer = corr_inner(r_crest, r_valley, nn, pipe_crest_w, valley_width, zz,
+                       tip_w = groove_tip_w);
+    len   = corr_length(nn, pipe_crest_w, valley_width);
+    rotate_extrude(convexity = 6)
+        difference() {
+            corr_soften(corr_round, pipe_fillet)
+                polygon(points = concat(outer, [
+                    [pipe_bore / 2, zz + len],
+                    [pipe_bore / 2, zz]
+                ]));
+            translate([-1, zz - 1]) square([1 + pipe_bore / 2, len + 2]);
+        }
+}
+
+// ====  ASSEMBLY  ============================================================
+module panel_ghost() {
+    color("silver", 0.35)
+        translate([0, 0, flange_thickness])
+            difference() {
+                translate([-25, -25, 0]) cube([50, 50, panel_thickness]);
+                translate([0, 0, -1]) cylinder(h = panel_thickness + 2,
+                                               d = panel_hole + hole_tolerance);
+            }
+}
+
+module pipe_ghost() {
+    color("darkorange", 0.55) conduit();
+}
+
+module assembly() {
+    body();
+    panel_ghost();
+    pipe_ghost();
+}
+
+// ====  THE FIT CHECK  =======================================================
+//  Where the collar and the pipe both claim the same millimetre. Render it and
+//  OpenSCAD should say "Current top level object is empty" -- anything else is
+//  material the printer will lay down inside the groove, and the part will sit
+//  proud of the pipe by however thick it is.
+//
+//  This earns its place in the dispatch because the eye cannot do it. A tooth
+//  that bottoms on the flanks of a V looks perfect in every view: correct depth,
+//  correct width, seated. The interference is a wedge a tenth of a millimetre
+//  thick and you will not see it. Run this for every new pipe you measure.
+module fit_check() {
+    intersection() {
+        body();
+        conduit();
+    }
+}
+
+// Render the model, unless another file (e.g. snap_collar_dimensions.scad)
+// includes this one only for its parameters and modules -- it sets
+// DIMENSIONS_ONLY first.
+if (is_undef(DIMENSIONS_ONLY)) {
+    if      (part == "body")     body();
+    else if (part == "section")  body_section();
+    else if (part == "assembly") assembly();
+    else if (part == "pipe")     conduit(n = 8, z0 = 0);
+    else if (part == "fit")      fit_check();
+    else assert(false, str("unknown part: ", part));
+}

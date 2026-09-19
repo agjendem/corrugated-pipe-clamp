@@ -51,6 +51,16 @@ coverage_deg   = 200;  // degrees of the pipe circumference covered
 flange_overhang  = 3;  // how far the flange extends beyond the pipe width (mm)
 flange_thickness = 1;  // flange thickness along the pipe axis (mm)
 
+/* [Screw brim -- anchor to a stud instead of trusting the hole] */
+screw_count   = 0;      // [0:none, 1:one, in the middle of the arc, 2:one each side, 3:three]
+screw_pcd     = 30;     // circle the screw centres sit on (mm)
+screw_spread  = 90;     // degrees either side of centre (ignored when count = 1)
+screw_d       = 4.0;    // clearance hole for a 3.5 mm gipsskrue (mm)
+screw_head_d  = 8.0;    // its bugle head (mm)
+screw_cs_angle = 90;    // included angle of the countersink (deg)
+// A screw brim needs a wider flange AND a thicker one than the defaults here:
+// the countersink alone is 2 mm deep. The asserts below say by how much.
+
 /* [Render quality] */
 $fn = 180;
 
@@ -64,59 +74,48 @@ period   = corr_width + groove_width;    // one corrugation period along the axi
 length   = corr_count * period;          // total length along the pipe
 r_flange = r_recess + flange_overhang;   // flange outer radius (beyond the pipe)
 
+// The corrugation profile and its two fillets, shared with snap_collar.scad.
+include <corrugation.scad>
+// Countersunk screw holes in the brim, shared with snap_collar.scad.
+include <brim.scad>
+
 assert(bore_diameter > pipe_diameter,
        "bore_diameter must be larger than pipe_diameter");
 assert(r_grip > 0, "corr_depth too large for this pipe_diameter");
-assert(corr_round <= min(corr_width, groove_width) / 2,
-       "corr_round must be <= min(corr_width, groove_width)/2");
-assert(corr_round <= corr_depth,
-       "corr_round must be <= corr_depth");
-assert(groove_fillet <= corr_depth,
-       "groove_fillet must be <= corr_depth");
-assert(groove_fillet <= groove_width / 2,
-       "groove_fillet must be <= groove_width/2");
+for (c = corr_fillet_checks(corr_round, groove_fillet, corr_depth,
+                            groove_width, corr_width))
+    assert(c[0], c[1]);
+for (c = brim_checks(screw_count, screw_pcd, screw_spread, screw_d, screw_head_d,
+                     screw_cs_angle, flange_thickness,
+                     r_outer, r_flange, coverage_deg / 2))
+    assert(c[0], c[1]);
 
 echo(str("Available material (radial): ", material, " mm"));
 echo(str("Clamp body outer Ø: ", bore_diameter, " mm"));
 echo(str("Flange Ø: ", 2 * r_flange, " mm"));
 echo(str("Length: ", length, " mm"));
+if (screw_count > 0) {
+    echo(str("Screw brim: ", screw_count, " x Ø", screw_d, " on a Ø", screw_pcd,
+             " circle, ", screw_cs_angle, "° countersink ",
+             brim_cs_depth(screw_head_d, screw_d, screw_cs_angle),
+             " mm deep in a ", flange_thickness, " mm flange"));
+    echo("  Screwed down, the pipe is held BOTH ways -- not just from pulling out.");
+}
 
 // ── Clamp body: square-wave inner edge with two independent fillets ─────────
 //  Cross-section in the (radius, axial-z) plane, revolved around Z.
 //  Teeth (r_grip) sit in the conduit grooves; recesses (r_recess) clear crests.
-//  The raw profile is a sharp square wave. Two morphological passes round it:
-//    - groove_fillet: a "closing" (grow then shrink) that fills the CONCAVE
-//      groove corners -- including the downward-facing tooth undersides -- so
-//      the printed overhang is eased. It cannot erode the thin teeth.
-//    - corr_round: an "opening" (shrink then grow) that rounds the CONVEX
-//      tooth tips. Done second so it also softens the tips left by the closing.
-inner_pts = concat(
-    [ [r_recess, 0] ],                               // flat at the flange end
-    [ for (i = [0 : corr_count - 1]) each [
-        [r_recess, i * period],                      // recess start (over a crest)
-        [r_recess, i * period + groove_width],       // recess end
-        [r_grip,   i * period + groove_width],       // step in to grip tooth
-        [r_grip,   (i + 1) * period]                 // tooth end / next start
-    ]],
-    [ [r_recess, length] ]                           // flat at the far end
-);
+//  The wave itself and the two fillet passes live in corrugation.scad; what is
+//  local here is only how the section is CLOSED -- for this part, a plain
+//  cylindrical outer wall at r_outer, which is the bore it has to pass through.
+inner_pts = corr_inner(r_recess, r_grip, corr_count, groove_width, corr_width);
 
 // Close the profile along the outer wall (top -> bottom). polygon() closes
 // automatically from [r_outer, 0] back to the first point [r_recess, 0].
 profile = concat(inner_pts, [ [r_outer, length], [r_outer, 0] ]);
 
-// 2D half-section with the groove-bottom (concave) and tooth-tip (convex)
-// fillets applied independently. Each offset pair is a no-op when its radius
-// is 0, so the straight outer wall and the flat ends stay untouched.
 module section_2d() {
-    rt = corr_round;
-    rg = groove_fillet;
-    // Innermost first: polygon, then the closing pair, then the opening pair.
-    // groove_fillet: closing = grow (fills concave grooves) then shrink back.
-    // corr_round:    opening = shrink (rounds convex tips) then grow back.
-    offset(r = rt) offset(r = -rt)          // opening by corr_round (tips)
-        offset(r = -rg) offset(r = rg)      // closing by groove_fillet (grooves)
-            polygon(points = profile);
+    corr_soften(corr_round, groove_fillet) polygon(points = profile);
 }
 
 module clamp_body() {
@@ -139,9 +138,21 @@ module flange() {
 }
 
 // ── Assembly ────────────────────────────────────────────────────────────────
+//  The body is extruded from theta = 0, so the middle of the material is at
+//  coverage_deg/2 -- the cuts are rotated there, because that is where a single
+//  screw has to go and where screw_spread is measured from.
+module body() {
+    difference() {
+        union() {
+            clamp_body();
+            flange();
+        }
+        rotate([0, 0, coverage_deg / 2])
+            brim_screw_cuts(screw_count, screw_pcd, screw_spread, screw_d,
+                            screw_head_d, screw_cs_angle, flange_thickness);
+    }
+}
+
 // Render the model, unless another file (e.g. dimensions.scad) includes this
 // one only for its parameters and modules — it sets DIMENSIONS_ONLY first.
-if (is_undef(DIMENSIONS_ONLY)) union() {
-    clamp_body();
-    flange();
-}
+if (is_undef(DIMENSIONS_ONLY)) body();

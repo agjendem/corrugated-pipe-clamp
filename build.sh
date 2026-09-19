@@ -40,6 +40,7 @@ build_model() {    # $1 = json file, $2 = scad file
 }
 
 build_model pipe_clamp.json       pipe_clamp.scad
+build_model snap_collar.json      snap_collar.scad
 build_model corner_bend.json      corner_bend.scad
 build_model corner_elbow.json     corner_elbow.scad
 build_model corner_elbow_clear.json corner_elbow_clear.scad
