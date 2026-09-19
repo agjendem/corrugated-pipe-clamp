@@ -439,7 +439,7 @@ arguments.
 |---|---|
 | [`corrugation.scad`](corrugation.scad) | the corrugation profile — square or tapered — and its two fillet passes |
 | [`brim.scad`](brim.scad) | countersunk screw holes in a flange |
-| [`thread.scad`](thread.scad) | the threaded stuss and nut the corner parts share |
+| [`thread.scad`](thread.scad) | the threaded stuss and nut the corner and panel parts share |
 
 It also carries the bound that is easy to get wrong: a closing of radius *R* **seals** any
 slot narrower than 2*R* rather than filleting it, and an opening of radius *R* **erases** any
@@ -610,6 +610,112 @@ Named parameter sets live in [`panel_spigot.json`](panel_spigot.json):
 
 ```sh
 openscad -o panel_spigot.stl -p panel_spigot.json -P panel_spigot panel_spigot.scad
+```
+
+## Addon: panel elbow
+
+[`panel_elbow.scad`](panel_elbow.scad) is the turn: a **rigid** pipe comes down from above,
+goes 90° in the tightest arc the bore allows, and leaves horizontally through the panel on
+the **same thread and the same nut** as `panel_spigot` and the corner parts. The socket end
+is the only fitted end; the panel end is as short as a bend can be.
+
+![Panel elbow](images/panel_elbow.png)
+
+It comes in two sizes — Ø40 and Ø25, matching the rigid pipe that goes in — and **the bore
+never changes along the part.** Ø40 from the socket's mouth, round the arc, through the
+collar and out of the thread's tip, so there is no step at the collar and nothing inside for
+a cable to catch.
+
+| In the panel, socket up | The bend plane, cut | As it goes on the bed |
+|:---:|:---:|:---:|
+| ![Assembly](images/panel_elbow_assembly.png) | ![Section](images/panel_elbow_split.png) | ![Print layout](images/panel_elbow_print.png) |
+
+The numbers the default Ø40 comes to:
+
+| | |
+|---|---:|
+| Bore, end to end | **Ø40** |
+| Socket | Ø40.4 × 40 mm deep |
+| Bend radius, centreline | 30 mm (0.75 × the bore) |
+| Throat left inside the turn | 7.5 mm |
+| Panel face → socket axis | **33 mm** |
+| Collar (the brim) | Ø58 × 3 mm, bearing 4 mm all round |
+| Thread | crest Ø49.2, 12 mm long, 10 mm inside the box |
+| Overall | 99 × 67.5 mm |
+
+Four things decide the part:
+
+- **The bore is held all the way, so the socket's stop is 0.2 mm.** `pipe_fit` is a *socket*
+  clearance: the bore behind it is back at Ø40, so where the clearance runs out the rigid
+  pipe meets a 0.2 mm step all round and goes no further. That is what holding one diameter
+  end to end costs — a proper shoulder would have to narrow the channel.
+- **The arc is tangent at both ends, so `bend_r` is the only free number.** The floor under
+  it is the tube's own outer radius: at `bend_r = elbow_od / 2` the inside of the turn closes
+  to a cusp and the solid folds through itself. The assert keeps `bend_min_clear` of daylight
+  in the throat and names the minimum. `panel_elbow_easy` opens it out to 45 mm if you would
+  rather pull cable than save space.
+- **The collar is sized off the hole, not off the tube.** Unlike `panel_spigot`, whose Ø50
+  tube cannot pass its Ø50 hole, this elbow is Ø45 through a Ø50 hole — *narrower* than the
+  hole, so the collar is the only thing stopping it going in. It gets the bearing ring
+  `panel_spigot` never had room for: 4 mm all round, chosen so the brim comes out wider than
+  the nut on the other side, `nut_slim` included. The echo says which way round they landed.
+- **The root is thickened from the outside.** With the bore constant there is no step at the
+  collar to turn into a cone, so the collar's Ø is carried 8 mm up the elbow instead — the
+  fillet at the root of the cantilever, 39° from vertical, and the only extra material the
+  root gets.
+
+### Two ways to print it, and neither is free
+
+A 90° elbow has two axes at right angles: whichever stands up, the other lies down, and the
+last stretch of arc under it overhangs. Both layouts are in the file and both want a brim
+and supports; what differs is **where the supports land**.
+
+| | `print` | `print_neck` |
+|---|---|---|
+| Stands on | the socket's mouth | the thread's tip |
+| First-layer ring | 1.8 mm wide, 2.4 cm² | 1.2 mm wide, 1.7 cm² |
+| The thread comes out | lying down | **vertical — the best it gets** |
+| Supports land on | **the thread and the collar's rim** | bare tube, outside only |
+
+`print` is the default: the bigger, safer first layer, and it follows `panel_spigot`'s rule
+of never standing the part on its thread. Take `print_neck` if you would rather protect the
+thread than the first layer — nothing there touches the screw or the bearing face, but you
+are trusting a 1.2 mm ring to hold a 67 mm tall part down.
+
+![Print layout, standing on the thread](images/panel_elbow_print_neck.png)
+
+### The Ø25 size
+
+Same part, same thread profile, its own smaller hole: Ø35 instead of Ø50, which puts the
+thread crest at Ø34.2 and still leaves 3.8 mm of wall at the root. The bend comes down to
+18.8 mm on the centreline and the part reaches 21.8 mm from the panel face to the socket's
+axis. Its nut is a different (smaller) print — `panel_elbow_25_nut`.
+
+![Panel elbow, Ø25](images/panel_elbow_25.png)
+
+At Ø40 the nut is **byte-identical** to `panel_spigot_nut`, `corner_elbow_nut` and
+`corner_elbow_clear_nut` — one print serves the whole Ø50 family.
+
+### Presets
+
+Named parameter sets live in [`panel_elbow.json`](panel_elbow.json):
+
+| Preset | What it builds |
+|---|---|
+| `panel_elbow` | **the default: Ø40 bore, 30 mm bend, 40 mm socket, Ø50 hole** |
+| `panel_elbow_print` | the same, standing on the socket's mouth |
+| `panel_elbow_print_neck` | the same, standing on the thread's tip |
+| `panel_elbow_long`, `panel_elbow_long_print` | 60 mm of socket instead of 40 |
+| `panel_elbow_easy`, `panel_elbow_easy_print` | a 45 mm bend radius — roomier, longer |
+| `panel_elbow_nut`, `panel_elbow_nut_wide` | the fin-grip nut, and the flanged one |
+| `panel_elbow_nut_slim` | the scalloped grip — Ø57.2 instead of Ø74.4 across |
+| `panel_elbow_25` | **Ø25 bore, 18.8 mm bend, Ø35 hole** |
+| `panel_elbow_25_print`, `panel_elbow_25_print_neck` | the same, for the bed |
+| `panel_elbow_25_long` | 60 mm of socket |
+| `panel_elbow_25_nut`, `panel_elbow_25_nut_slim` | its own smaller nut, both grips |
+
+```sh
+openscad -o panel_elbow.stl -p panel_elbow.json -P panel_elbow panel_elbow.scad
 ```
 
 ## Requirements

@@ -246,4 +246,28 @@ spigot_view panel_spigot_assembly 0,0,0,68,0,32,0 assembly
     --viewall --autocenter --projection=o --camera=0,0,0,90,0,0,0 \
     --colorscheme=Tomorrow -D 'part="section"' panel_spigot.scad
 
+# ── Panel elbow (the 90 deg one) ────────────────────────────────────────────
+# All from the defaults in panel_elbow.scad -- Ø40 bore, 30 mm bend. Auto-framed.
+elbow_view() {  # out_name  camera  part
+    "$OPENSCAD" -o "images/$1.png" --imgsize=1200,1000 \
+        --viewall --autocenter --camera="$2" --colorscheme=Tomorrow \
+        -D "part=\"$3\"" panel_elbow.scad
+}
+
+elbow_view panel_elbow            0,0,0,62,0,32,0 body
+elbow_view panel_elbow_assembly   0,0,0,68,0,32,0 assembly   # panel upright, socket up
+elbow_view panel_elbow_print      0,0,0,66,0,28,0 print      # standing on the mouth
+elbow_view panel_elbow_print_neck 0,0,0,66,0,28,0 print_neck # standing on the thread
+
+# Cut on the bend plane: the constant Ø40 bore right through, the step at the
+# socket's stop, the collar flat underneath and the cone climbing out of it.
+"$OPENSCAD" -o "images/panel_elbow_split.png" --imgsize=1300,1000 \
+    --viewall --autocenter --projection=o --camera=0,0,0,90,0,0,0 \
+    --colorscheme=Tomorrow -D 'part="section"' panel_elbow.scad
+
+# The same part at Ø25, on its own smaller hole and its own smaller nut.
+"$OPENSCAD" -o "images/panel_elbow_25.png" --imgsize=1200,1000 \
+    --viewall --autocenter --camera=0,0,0,62,0,32,0 --colorscheme=Tomorrow \
+    -p panel_elbow.json -P panel_elbow_25 panel_elbow.scad
+
 echo "Rendered images/*.png"

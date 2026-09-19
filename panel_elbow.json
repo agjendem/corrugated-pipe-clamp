@@ -1,0 +1,75 @@
+{
+  "parameterSets": {
+    "panel_elbow": {
+      "part": "body"
+    },
+    "panel_elbow_print": {
+      "part": "print"
+    },
+    "panel_elbow_print_neck": {
+      "part": "print_neck"
+    },
+    "panel_elbow_nut": {
+      "part": "nut"
+    },
+    "panel_elbow_nut_slim": {
+      "part": "nut",
+      "nut_grip": "0",
+      "nut_wall": "4"
+    },
+    "panel_elbow_nut_wide": {
+      "part": "nut",
+      "nut_flange": "13"
+    },
+    "panel_elbow_long": {
+      "part": "body",
+      "socket_len": "60"
+    },
+    "panel_elbow_long_print": {
+      "part": "print",
+      "socket_len": "60"
+    },
+    "panel_elbow_easy": {
+      "part": "body",
+      "bend_radius": "45"
+    },
+    "panel_elbow_easy_print": {
+      "part": "print",
+      "bend_radius": "45"
+    },
+    "panel_elbow_25": {
+      "part": "body",
+      "pipe_od": "25",
+      "hole_diameter": "35"
+    },
+    "panel_elbow_25_print": {
+      "part": "print",
+      "pipe_od": "25",
+      "hole_diameter": "35"
+    },
+    "panel_elbow_25_print_neck": {
+      "part": "print_neck",
+      "pipe_od": "25",
+      "hole_diameter": "35"
+    },
+    "panel_elbow_25_nut": {
+      "part": "nut",
+      "pipe_od": "25",
+      "hole_diameter": "35"
+    },
+    "panel_elbow_25_nut_slim": {
+      "part": "nut",
+      "pipe_od": "25",
+      "hole_diameter": "35",
+      "nut_grip": "0",
+      "nut_wall": "4"
+    },
+    "panel_elbow_25_long": {
+      "part": "body",
+      "pipe_od": "25",
+      "hole_diameter": "35",
+      "socket_len": "60"
+    }
+  },
+  "fileFormatVersion": "1"
+}

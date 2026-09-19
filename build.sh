@@ -45,5 +45,6 @@ build_model corner_bend.json      corner_bend.scad
 build_model corner_elbow.json     corner_elbow.scad
 build_model corner_elbow_clear.json corner_elbow_clear.scad
 build_model panel_spigot.json      panel_spigot.scad
+build_model panel_elbow.json       panel_elbow.scad
 
 echo "Done -> stl/*.stl"
