@@ -155,6 +155,15 @@ spigot_view panel_spigot_assembly 0,0,0,68,0,32,0 assembly
     --viewall --autocenter --projection=o --camera=0,0,0,180,0,0,0 \
     --colorscheme=Tomorrow -D 'part="body"' panel_spigot.scad
 
+# The two grips, side by side in the README: fins grown out of the body, and
+# scallops cut into it. Same thread, same height, 17 mm apart in width.
+"$OPENSCAD" -o "images/panel_spigot_nut.png" --imgsize=1000,1000 \
+    --viewall --autocenter --camera=0,0,0,58,0,20,0 --colorscheme=Tomorrow \
+    -D 'part="nut"' panel_spigot.scad
+"$OPENSCAD" -o "images/panel_spigot_nut_slim.png" --imgsize=1000,1000 \
+    --viewall --autocenter --camera=0,0,0,58,0,20,0 --colorscheme=Tomorrow \
+    -p panel_spigot.json -P panel_spigot_nut_slim panel_spigot.scad
+
 # Cut in half: the 1.5 mm wall, the flat collar, and the cone through it that
 # is both the fillet at the tube's root and the funnel for the cable.
 "$OPENSCAD" -o "images/panel_spigot_split.png" --imgsize=1100,1200 \

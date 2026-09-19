@@ -19,10 +19,21 @@
 //      thread_root_r, thread_crest_r                    derived from the hole Ø
 //      nut_od, nut_height, nut_lobes                    the nut's body
 //      nut_grip, nut_fin_w, nut_fin_r                   its fins
+//      nut_grip_r, nut_grip_depth, nut_grip_wall        its scallops (nut_grip = 0)
 //      nut_flange, nut_flange_t, nut_flange_od          its optional bearing flange
 //
 //  All dimensions are in millimetres.
 // ============================================================================
+
+// ── The one thing the scalloped grip must not be allowed to do ───────────
+//  Cut through to the thread. A scallop is a hollow in a wall that is already
+//  only nut_wall thick, and the thread's own clearance has taken half a
+//  millimetre of it before the cutter arrives.
+assert(nut_grip > 0 || nut_grip_wall >= 1.2,
+       str("The scalloped grip leaves ", round(nut_grip_wall * 100) / 100,
+           " mm of wall over the thread crest -- about one perimeter, and it will strip. ",
+           "Raise nut_wall, or cut nut_grip_depth back to ",
+           round((nut_wall - 1.2 - thread_clearance / 2) * 100) / 100, " mm or less."));
 
 // ── Small helpers ───────────────────────────────────────────────────────────
 function pol(r, a) = [r * cos(a), r * sin(a)];
@@ -50,6 +61,14 @@ module thread_solid(h, extra = 0) {
 }
 
 // ── The nut ─────────────────────────────────────────────────────────────────
+// Two grips, and the choice is nut_grip: above zero it grows FINS out of the
+// body, at zero it cuts SCALLOPS into it. The fins have all the leverage --
+// they are what you want on a nut you have to heave on -- but they cost
+// 2 * nut_grip of width, and in a cabinet that width is often not there. The
+// scallops cost none: the nut stays nut_od across. What they cost instead is
+// the wall under them, which is the only material holding the thread, and on a
+// big thread with a thin wall there is not enough of it. nut_grip_wall says how
+// much is left and the assert below refuses to print a nut that would strip.
 module nut_profile2d() {
     R = nut_od / 2;
     if (nut_grip > 0)
@@ -66,7 +85,8 @@ module nut_profile2d() {
         difference() {
             circle(r = R);
             for (i = [0 : nut_lobes - 1])
-                rotate([0, 0, i * 360 / nut_lobes]) translate([R + 2.2, 0]) circle(r = 4);
+                rotate([0, 0, i * 360 / nut_lobes])
+                    translate([R + nut_grip_r - nut_grip_depth, 0]) circle(r = nut_grip_r);
         }
 }
 

@@ -113,6 +113,15 @@ nut_lobes      = 6;
 nut_grip       = 10;
 nut_fin_w      = 8;
 nut_grip_clear = 4;
+// The OTHER grip: hollows cut INTO the body instead of fins grown out of it.
+// Selected by nut_grip = 0, and worth having because it is the same nut ~20 mm
+// narrower across -- in a cabinet that is the difference between the nut
+// turning and not. What it costs is wall: the hollows eat the only material
+// holding the thread in, which is why nut_grip_wall is derived and asserted.
+nut_grip_r     = 4;    // radius of the cutter rolled round the body (mm)
+nut_grip_depth = 1.8;  // how deep it bites (mm). 1.8 on the stock 2.6 mm wall
+                       // leaves 0.6 -- too little at this size. Either cut it
+                       // back or give the nut a thicker wall; both are presets.
 nut_flange     = 0;
 nut_flange_t   = 2.5;
 
@@ -146,6 +155,10 @@ nut_bearing_od = nut_flange > 0 ? nut_flange_od : nut_od;
 nut_fin_r      = nut_grip <= 0 ? nut_od / 2
                : max(nut_od / 2 + nut_grip,
                      nut_flange > 0 ? nut_flange_od / 2 + nut_grip_clear : 0);
+// What is left under the deepest point of a scallop. The nut's bore is the
+// thread grown by half the clearance, so the wall is measured from the CREST of
+// that grown thread, not from the root -- the root would flatter it by 0.8 mm.
+nut_grip_wall  = nut_wall - nut_grip_depth - thread_clearance / 2;
 
 locator_id = mount_flange_d + locator_fit;
 locator_od = locator_id + 2 * locator_wall;
@@ -228,7 +241,11 @@ echo(str("Neck: thread crest Ø ", neck_od, ", ", neck_length, " mm long (",
 echo(str("Glue face: recess Ø", pipe_diameter + pipe_recess_fit, " x ", pipe_recess,
          " mm deep for the cut pipe end (it stands ", pipe_stub, " mm proud); ",
          mm1(glue_t - pipe_recess), " mm of plate behind it"));
-echo(str("Nut: Ø ", nut_od, " body, Ø ", 2 * nut_fin_r, " over the fins, ", nut_height, " mm tall"));
+echo(nut_grip > 0
+     ? str("Nut: Ø ", nut_od, " body, Ø ", 2 * nut_fin_r, " over the fins, ",
+           nut_height, " mm tall")
+     : str("Nut: Ø ", nut_od, " across -- scalloped grip, no fins, ", nut_height,
+           " mm tall; ", mm1(nut_grip_wall), " mm of wall under the grip"));
 
 // The screw connection -- thread and nut -- lives in one place for all three
 // corner parts. It needs thread_starts/pitch/clearance, thread_root_r,

@@ -235,6 +235,36 @@ a thin Ø50/Ø47 ring, about 2.3 cm², so give it a brim.
 
 ![Print layout](images/panel_spigot_print.png)
 
+### Two nuts, and why you might want the narrow one
+
+The nut has always had two grips, and `nut_grip` picks between them. Above zero it grows
+**fins** out of the body; at zero it cuts **scallops** into it. Same thread, same height —
+what differs is how much room the nut needs to turn in.
+
+| Fins (`panel_spigot_nut`) | Scallops (`panel_spigot_nut_slim`) |
+|:---:|:---:|
+| ![Finned nut](images/panel_spigot_nut.png) | ![Scalloped nut](images/panel_spigot_nut_slim.png) |
+| Ø74.4 across | **Ø57.2 across** |
+
+The fins have all the leverage and are what you want on a nut you have to heave on. But they
+cost `2 * nut_grip` of width, and behind a cabinet that width is often simply not there. The
+scallops cost none — the nut stays `nut_od` across.
+
+What they cost instead is **wall**. A scallop is a hollow in a wall that is only `nut_wall`
+thick, and the thread's clearance has taken half a millimetre before the cutter arrives. On
+the Ø50 screw the stock 2.6 mm wall leaves **0.6 mm** under a full-depth scallop — about one
+perimeter, and it will strip. That is asserted rather than left to chance: ask for it and the
+render stops and tells you the two ways out. Both are presets:
+
+- `panel_spigot_nut_slim` — `nut_wall` 4, full-depth grip. **Ø57.2, 2.0 mm of wall.** The one
+  to print: still 17 mm narrower than the finned nut.
+- `panel_spigot_nut_slim_tight` — the stock wall with a shallower grip. **Ø54.4, 1.4 mm of
+  wall.** For when even Ø57 will not turn.
+
+The nut is the same part for every model that uses this Ø50 hole — `corner_bend`,
+`corner_elbow`, `corner_elbow_clear` and `panel_spigot` all export a byte-identical STL — so
+one print serves them all, whichever grip you choose.
+
 ### Presets
 
 Named parameter sets live in [`panel_spigot.json`](panel_spigot.json):
@@ -247,6 +277,8 @@ Named parameter sets live in [`panel_spigot.json`](panel_spigot.json):
 | `panel_spigot_thin` | a 1 mm wall — a duct, not something to lean on |
 | `panel_spigot_wide` | `collar_over` 4, so the ring it hangs on is 2 mm |
 | `panel_spigot_nut`, `panel_spigot_nut_wide` | the fin-grip nut, and the flanged one |
+| `panel_spigot_nut_slim` | the scalloped grip — Ø57.2 instead of Ø74.4 across |
+| `panel_spigot_nut_slim_tight` | the same, narrower still at Ø54.4, on a thinner wall |
 | `panel_spigot_hole60`, `panel_spigot_nut_hole60` | a Ø60 hole, with the tube grown to match |
 
 ```sh
