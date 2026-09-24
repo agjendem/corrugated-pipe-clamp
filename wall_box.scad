@@ -73,8 +73,11 @@ wall      = 2.5;  // the shell, everywhere: barrel, back and sweep
 
 /* [The lip -- what stops it on the board] */
 lip_od = 76.5;  // bigger than the sawn hole, so it catches
-lip_t  = 2;     // how far it stands proud of the board (mm). The bearing face
-                // underneath is FLAT, always.
+lip_t  = 0.8;   // how far it stands proud of the board (mm). Commercial boxes
+                // run 0.6-0.8 and this is the top of that range, because a
+                // printed lip is weaker than a moulded one. The bearing face
+                // underneath is FLAT, always. Nothing is countersunk into it --
+                // at 0.8 there is nothing to countersink into.
 
 /* [The wall it goes into] */
 board_t  = 25;  // the board's thickness (mm)  <- MEASURE YOURS. 25 is double 12.5.
@@ -95,22 +98,50 @@ sweep_r = 20;   // radius of the arc (mm). Tangent to the floor at the front and
 /* [Lid screws -- the standard 60 mm centres] */
 lid_pcd     = 60;   // centre-to-centre (mm)
 boss_d      = 10;   // the boss Ø (mm). Ø8 would stand clear of the wall.
-pilot_d     = 2.9;  // pilot for a self-tapping M3.5 (mm)
-pilot_depth = 15;   // how deep it is bored from the front (mm)
-boss_len    = 55;   // how far the boss runs back (mm)
+pilot_d     = 3;    // pilot for the lid screw (mm)
+pilot_depth = 20;   // how deep it is bored from the front (mm)
+// The boss runs the WHOLE way to the back wall. It costs a few grams and it
+// buys the one thing a moulded box gets for free: the screw is anchored at both
+// ends instead of cantilevered off the rim. What stops it is the sweep, which
+// clips its upper edge at about z 69 and lets its lower edge run into the back
+// wall -- that is what `envelope()` is doing in lid_bosses().
 
 /* [The wings -- the metal plates that fold out behind the board] */
-// Bought or salvaged hardware; every figure here is a placeholder.
-wing_angle   = 45;   // degrees off the pipe, i.e. off 12 o'clock
-wing_pcd     = 72;   // the screws' pitch circle (mm)
-wing_screw_d = 4.4;  // clearance for an M4 (mm)
-wing_head_d  = 8;    // its head, countersunk into the lip (mm)
-wing_slot_w  = 10;   // the channel's width (mm)
-wing_floor_r = 34.5; // the channel's floor, as a radius (mm)
-wing_rib_r   = 29;   // how far the rib carrying the screw reaches in (mm)
-wing_rib_w   = 16;   // the rib's width (mm)
-wing_ramp_z  = 32;   // where the kick-out ramp sits (mm). Must be behind the board.
-wing_ramp_a  = 40;   // the ramp's angle from the box's axis (deg)
+// MEASURED off the real hardware: a 13 x 7 x 2 steel tab on a Ø3 screw, with
+// the screw's hole 1.5 mm from one end so the tab reaches 11.5 mm from the
+// screw's centre. It swings in a plane PARALLEL TO THE BOARD -- stowed it lies
+// tangentially inside Ø74, deployed it points straight out and catches the
+// board's back face.
+wing_angle       = 45;   // degrees off the pipe, i.e. off 12 o'clock
+wing_pcd         = 66;   // the screws' pitch circle (mm). Ø72 put the head out
+                         // in the lip; at Ø66 it sits in the wall, in the rib.
+wing_screw_d     = 3.4;  // clearance for the Ø3 screw (mm)
+wing_screw_len   = 50;   // the screws are 45-50 long  <- the pocket has to be
+                         // reachable within this, asserted below
+wing_head_d      = 6;    // the head (mm)
+wing_head_sink   = 1;    // how much DEEPER than a plain countersink the head is
+                         // let in (mm). The cone alone leaves it proud of the
+                         // rim; this buries it.
+wing_plate_l     = 13;   // the tab, tip to tip (mm)
+wing_plate_w     = 7;    // its width (mm)
+wing_plate_t     = 2;    // its thickness (mm)
+wing_plate_reach = 11.5; // screw centre -> far tip (mm). This is what has to
+                         // clear the sawn hole's edge to catch the board.
+wing_slot_z      = 28;   // the pocket's FRONT face, from the bearing face (mm).
+                         // Not from the lip: the tab has to end up behind the
+                         // board, and the lip is on the other side of it.
+wing_slot_clear  = 0.6;  // height the pocket has over the tab's thickness (mm)
+wing_rib_r       = 27;   // how far the rib carrying the screw reaches in (mm)
+wing_rib_w       = 20;   // the rib's width (mm)
+
+/* [Anti-rotation -- what stops the box turning in a sawn hole] */
+ar_count = 10;   // how many strips round the box
+ar_h     = 0.5;  // how far each stands proud of Ø74 at the lip (mm)
+ar_w     = 0.5;  // its width (mm)
+ar_len   = 20;   // how far back it runs before it has faded to nothing (mm).
+                 // It starts full height under the lip and tapers away inside
+                 // the board's thickness, so the box goes in progressively and
+                 // then cannot turn.
 
 /* [Assembly view] */
 show_board = true;
@@ -151,8 +182,27 @@ wing_r        = wing_pcd / 2;
 wing_axis_gap = wing_r * sin(wing_angle);
 gap_to_bore   = wing_axis_gap - r_bore   - wing_screw_d / 2;
 gap_to_collar = wing_axis_gap - r_collar - wing_screw_d / 2;
-wing_ramp_len = (r_out - wing_floor_r) / tan(wing_ramp_a);
 wing_a        = [90 - wing_angle, 270 - wing_angle];   // 12 o'clock is +y
+// The pocket is the disc the tab sweeps through as it turns, plus a little.
+// It is deliberately symmetric: which way round the tab stows depends on which
+// end of the box you are looking from, and a pocket that works both ways costs
+// only a slightly wider window. Narrow it to a sector once the handedness is
+// settled on a real one.
+// What the tab actually sweeps is its far CORNER, not its tip: the reach and
+// half the width, by Pythagoras. On a 13 x 7 tab reaching 11.5 that is 12.0,
+// and sizing the pocket off the reach alone would have left it half a
+// millimetre short all the way round.
+wing_sweep_r  = sqrt(pow(wing_plate_reach, 2) + pow(wing_plate_w / 2, 2)) + 0.5;
+wing_slot_h   = wing_plate_t + wing_slot_clear;
+wing_reach    = wing_r + wing_plate_reach;    // where the deployed tip lands
+wing_bearing  = wing_reach - hole_saw / 2;    // how much board it catches
+// The head: a plain 90 degree countersink is only this deep, which leaves the
+// head standing proud of the rim. wing_head_sink buries it further.
+wing_cs_depth = (wing_head_d - wing_screw_d) / 2;
+wing_head_z   = wing_head_sink + wing_cs_depth;
+
+// ── Derived: the anti-rotation strips ───────────────────────────────────────
+ar_fade = atan(ar_len / ar_h);   // how shallow the taper is, from the surface
 
 function mm1(x) = round(x * 10) / 10;
 
@@ -183,11 +233,35 @@ assert(r_collar <= sqrt(pow(hole_saw / 2, 2) - 0) && r_out <= hole_saw / 2,
 assert(gap_to_bore >= 1.2,
        str("The wing screw passes ", mm1(gap_to_bore), " mm from the pipe bore. Raise ",
            "wing_pcd (now ", wing_pcd, "), or move wing_angle off ", wing_angle, " deg."));
-assert(wing_ramp_z > board_t + 2,
-       str("The kick-out ramp sits ", wing_ramp_z, " mm in and the board owns 0..", board_t,
-           ". The plate would open inside the wall."));
-assert(boss_len < arc_cz,
-       str("boss_len ", boss_len, " runs past where the sweep starts (", mm1(arc_cz), ")."));
+assert(wing_slot_z >= board_t + 1.5,
+       str("The wing pocket's front face is ", wing_slot_z, " mm in and the board owns 0..",
+           board_t, ". The tab would swing out INSIDE the wall and clamp nothing. Raise ",
+           "wing_slot_z past ", board_t + 1.5, ", or measure the board again."));
+assert(wing_slot_z + wing_slot_h <= wing_screw_len - 8,
+       str("The pocket ends ", mm1(wing_slot_z + wing_slot_h), " mm in, and the screw is only ",
+           wing_screw_len, " mm long -- there is not enough of it past the tab to hold it. ",
+           "Lower wing_slot_z, or find a longer screw."));
+assert(wing_bearing >= 3,
+       str("Deployed, the tab reaches r ", mm1(wing_reach), " against a sawn hole of r ",
+           mm1(hole_saw / 2), " -- only ", mm1(wing_bearing),
+           " mm of board to pull against. Raise wing_pcd (now ", wing_pcd,
+           "), or saw the hole smaller."));
+assert(wing_r + wing_sweep_r > r_out,
+       "the pocket has to break out through the barrel or the tab cannot get out");
+assert(wing_plate_reach < wing_plate_l,
+       str("The tab is ", wing_plate_l, " long but reaches ", wing_plate_reach,
+           " from its screw -- measure it again; the hole cannot be outside the tab."));
+assert(wing_r - wing_screw_d / 2 > wing_rib_r + 1,
+       str("The wing screw at r ", wing_r, " is not carried by the rib (r ", wing_rib_r,
+           " outward). Lower wing_rib_r."));
+assert(wing_head_z < wing_slot_z - 2,
+       str("The head is let in ", mm1(wing_head_z), " mm and the pocket starts at ",
+           wing_slot_z, " -- they would meet."));
+assert(ar_h > 0 && ar_len > ar_h * 4,
+       "an anti-rotation strip that does not taper is a barb, not a lead-in");
+assert(ar_len <= board_t,
+       str("The anti-rotation strips run ", ar_len, " mm back but the board is only ", board_t,
+           " thick -- past that they are gripping air. Cut ar_len to ", board_t, " or less."));
 
 // ── What it comes to ────────────────────────────────────────────────────────
 echo(str("Overall: Ø", lip_od, " at the lip, Ø", body_od, " through the hole, ",
@@ -211,14 +285,30 @@ echo(str("Radius and grip are ONE number: mean grip = ", mm1(51.3), " - sweep_r,
 echo(str("Shell: ", wall, " mm, following the sweep. Its outer offset comes out tangent to ",
          "the barrel's bottom and to z ", box_depth,
          " by construction -- no double wall, no closed void."));
-echo(str("Lid screws: ", lid_pcd, " mm centres, Ø", boss_d, " bosses ", boss_len,
-         " mm long, Ø", pilot_d, " pilot ", pilot_depth, " mm deep for a self-tapping M3.5"));
-echo(str("Wings: Ø", wing_pcd, " pitch circle at ", wing_angle,
-         " deg off the pipe. The screw passes ", mm1(gap_to_bore), " mm from the bore."));
+echo(str("Lid screws: ", lid_pcd, " mm centres, Ø", pilot_d, " pilot ", pilot_depth,
+         " mm deep, in Ø", boss_d, " bosses carried ALL the way to the back wall -- ",
+         mm1((boss_d - pilot_d) / 2), " mm of material round the pilot, and the screw is ",
+         "anchored at both ends instead of hanging off the rim."));
+echo(str("Wings: Ø", wing_pcd, " pitch circle at ", wing_angle, " deg off the pipe, so the Ø",
+         wing_head_d, " head sits in the wall, not in the ", lip_t,
+         " mm lip. It is let in ", mm1(wing_head_z), " mm (", mm1(wing_cs_depth),
+         " of countersink plus ", wing_head_sink, " of counterbore). The screw passes ",
+         mm1(gap_to_bore), " mm from the pipe bore."));
+echo(str("Wing pocket: a ", mm1(2 * wing_sweep_r), " mm disc, ", mm1(wing_slot_h),
+         " mm tall, front face ", wing_slot_z, " mm in -- ", mm1(wing_slot_z - board_t),
+         " mm behind the board, which is what makes the tab open in the cavity and not in ",
+         "the wall. Deployed it reaches r ", mm1(wing_reach), ", catching ", mm1(wing_bearing),
+         " mm of board all the way round the Ø", hole_saw, " hole. The screw needs ",
+         mm1(wing_slot_z + wing_slot_h), " mm to reach it, of the ", wing_screw_len,
+         " it has."));
+echo(str("Anti-rotation: ", ar_count, " strips of ", ar_h, " x ", ar_w,
+         " under the lip, fading out over ", ar_len, " mm -- so they stand Ø",
+         mm1(body_od + 2 * ar_h), " at the lip, which is a press into a Ø", hole_saw,
+         " hole, and Ø", body_od, " by the time they are ", ar_len,
+         " mm in. They bite inside the board's thickness and nowhere else."));
 echo(str("NOTE: this is the shape, for checking. Print orientation is NOT solved yet -- ",
          "the back is a crescent now, not a disc, so it will not stand on it."));
 
-include <brim.scad>
 
 // ============================================================================
 //  THE PART
@@ -271,9 +361,15 @@ module collar() {
     }
 }
 
+// Carried the whole way to the back wall, and clipped by the envelope rather
+// than by a length: the sweep takes the upper edge at about z 69 and lets the
+// lower edge run into the back wall, which is exactly as far as there is box to
+// anchor into. That is the difference between a screw held at both ends and one
+// hanging off the rim.
 module lid_bosses() {
     intersection() {
-        for (s = [-1, 1]) translate([s * lid_pcd / 2, 0, 0]) cylinder(h = boss_len, d = boss_d);
+        for (s = [-1, 1])
+            translate([s * lid_pcd / 2, 0, 0]) cylinder(h = box_depth, d = boss_d);
         envelope();
     }
 }
@@ -284,6 +380,20 @@ module wing_ribs() {
             cube([r_out - wing_rib_r + 1, wing_rib_w, box_depth]);
         envelope();
     }
+}
+
+// The strips that stop the box turning in a sawn hole. Each is a thin wedge on
+// the outside: full height where it meets the underside of the lip, faded to
+// nothing `ar_len` in. Drawn in (radius, z) and swept across its width, the
+// same way the ramp is.
+module anti_rot_strips() {
+    for (i = [0 : ar_count - 1])
+        rotate([0, 0, i * 360 / ar_count])
+            translate([0, ar_w / 2, 0]) rotate([90, 0, 0])
+                linear_extrude(height = ar_w)
+                    polygon([[r_out - 0.5, 0],
+                             [r_out + ar_h, 0],
+                             [r_out - 0.5, ar_len]]);
 }
 
 // ── The cuts ────────────────────────────────────────────────────────────────
@@ -312,32 +422,37 @@ module pilot_holes() {
             cylinder(h = pilot_depth + lip_t + 1, d = pilot_d);
 }
 
-module wing_channels() {
-    at_wings() {
-        translate([wing_floor_r, -wing_slot_w / 2, wing_ramp_z + wing_ramp_len])
-            cube([r_out - wing_floor_r + 2, wing_slot_w,
-                  box_depth - wing_ramp_z - wing_ramp_len + 2]);
-        // The polygon is drawn in (radius, z); rotate([90,0,0]) is what puts a
-        // linear_extrude's plane there and sweeps it across the channel's width.
-        translate([0, wing_slot_w / 2, 0]) rotate([90, 0, 0])
-            linear_extrude(height = wing_slot_w)
-                polygon([[wing_floor_r, wing_ramp_z + wing_ramp_len],
-                         [r_out + 2,    wing_ramp_z + wing_ramp_len],
-                         [r_out + 2,    wing_ramp_z]]);
-    }
+// The pocket the tab lives in. The tab swings in a plane PARALLEL TO THE BOARD,
+// about the screw's own axis: stowed it lies tangentially and fits inside Ø74,
+// turned 90 degrees it points straight out past the sawn hole's edge and has
+// the board's back face to pull against. So the pocket is the disc it sweeps
+// through -- and it has to break out through the barrel, or the tab is trapped.
+module wing_pockets() {
+    at_wings() translate([wing_r, 0, wing_slot_z])
+        cylinder(h = wing_slot_h, r = wing_sweep_r);
 }
 
+// The screw: shank the whole way to where the tab sits and a little past, then
+// the head let in `wing_head_sink` deeper than its own countersink would go.
+// At Ø66 this lands in the wall, in the rib -- the 0.8 mm lip is out at r 34.5
+// and has nothing to do with it.
 module wing_screw_cuts() {
-    translate([0, 0, -lip_t]) rotate([0, 0, -wing_angle])
-        brim_screw_cuts(2, wing_pcd, 90, wing_screw_d, wing_head_d, 90, box_depth + lip_t);
+    at_wings() translate([wing_r, 0, 0]) {
+        translate([0, 0, -2])
+            cylinder(h = wing_screw_len + 2, d = wing_screw_d);
+        translate([0, 0, -2])                                   // the counterbore
+            cylinder(h = wing_head_sink + 2, d = wing_head_d);
+        translate([0, 0, wing_head_sink])                       // the 90 deg cone
+            cylinder(h = wing_cs_depth + 0.01, d1 = wing_head_d, d2 = wing_screw_d);
+    }
 }
 
 module body() {
     difference() {
-        union() { shell(); collar(); lid_bosses(); wing_ribs(); }
+        union() { shell(); collar(); lid_bosses(); wing_ribs(); anti_rot_strips(); }
         bore_cut();
         pilot_holes();
-        wing_channels();
+        wing_pockets();
         wing_screw_cuts();
     }
 }
