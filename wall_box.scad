@@ -112,9 +112,17 @@ pilot_depth = 20;   // how deep it is bored from the front (mm)
 // screw's centre. It swings in a plane PARALLEL TO THE BOARD -- stowed it lies
 // tangentially inside Ø74, deployed it points straight out and catches the
 // board's back face.
-wing_angle       = 45;   // degrees off the pipe, i.e. off 12 o'clock
-wing_pcd         = 66;   // the screws' pitch circle (mm). Ø72 put the head out
-                         // in the lip; at Ø66 it sits in the wall, in the rib.
+wing_angle       = 55;   // degrees off the pipe, i.e. off 12 o'clock. 45 is
+                         // the catalogue's, but it is not available to us: at 45
+                         // the screw passes 1.1 mm INSIDE the socket's collar.
+                         // Swinging it towards 3 o'clock buys that back -- and
+                         // 60 would buy more, except the pocket then reaches
+                         // 2.1 mm into the lid boss. 55 is the whole window.
+wing_pcd         = 63;   // the screws' pitch circle (mm). Ø72 put the head out
+                         // in the lip; Ø66 sat in the wall but stowed the tab's
+                         // far corner 0.8 mm OUTSIDE the sawn hole -- see
+                         // wing_stow_gap. The tab is flat and the barrel is not,
+                         // so the corner is what governs, not the tab's edge.
 wing_screw_d     = 3.4;  // clearance for the Ø3 screw (mm)
 wing_screw_len   = 50;   // the screws are 45-50 long  <- the pocket has to be
                          // reachable within this, asserted below
@@ -134,7 +142,7 @@ wing_slot_z      = 33;   // the pocket's FRONT face where it is FLAT, from the
                          // front of it still clears the board -- see
                          // wing_ramp_front below.
 wing_slot_clear  = 0.6;  // height the pocket has over the tab's thickness (mm)
-wing_rib_r       = 26;   // how far the rib carrying the screw reaches in (mm)
+wing_rib_r       = 25;   // how far the rib carrying the screw reaches in (mm)
 wing_rib_margin  = 2.5;  // how far the rib stands past the pocket on each side
                          // (mm). The rib is what the whole wing cut is floored
                          // INTO -- run the pocket past its edge and the cut
@@ -266,6 +274,28 @@ wing_lift_x0    = wing_out_x - wing_lift;
 wing_lift_fwd   = wing_lift * tan(wing_lift_a);
 wing_lift_front = wing_slot_z - wing_lift_fwd;
 wing_rib_left = wing_slot_in - wing_rib_r;   // material behind the whole cut
+// The rib only has work to do where the screw and the pocket are: the head's
+// seat at the front, the pocket at the back, and nothing past it. Running it the
+// full depth cost 13 cm3 of plastic AND merged it into the socket's collar,
+// leaving a window between rib, collar and shell. It stops 3 mm behind the
+// pocket, and the collar cannot reach out to r 25 until z 42.7, so they no
+// longer meet. Past the rib the screw's tip runs on into the cavity, which is
+// what the bought box does too -- the tab is the nut, and the tip has to go
+// somewhere once it is through it.
+wing_rib_len  = wing_slot_back + 3;
+// Swinging the wings towards 3 o'clock to clear the socket walks the pocket's
+// INNER corner towards a lid boss, and that is the other end of the squeeze: the
+// pipe sets a floor under wing_angle, the boss sets a ceiling over it. The corner
+// is the pocket's far-inner one, on whichever hand wing_fold_side puts it, taken
+// round to the box's own frame. Both bosses are checked, because the two wings
+// are 180 deg apart and so are they.
+wing_corner_a = 90 - wing_angle;
+wing_corner_x = wing_slot_in * cos(wing_corner_a)
+              - wing_fold_side * wing_pocket_y * sin(wing_corner_a);
+wing_corner_y = wing_slot_in * sin(wing_corner_a)
+              + wing_fold_side * wing_pocket_y * cos(wing_corner_a);
+wing_boss_gap = min(norm([wing_corner_x - lid_pcd / 2, wing_corner_y]),
+                    norm([wing_corner_x + lid_pcd / 2, wing_corner_y])) - boss_d / 2;
 // Stowed, the tab lies tangentially and its FAR CORNER is the widest thing on
 // the box -- wider than the barrel. Whether it clears the sawn hole is pure
 // Pythagoras on the pitch radius, the tab's half width and its reach.
@@ -358,8 +388,17 @@ assert(wing_rib_margin >= 1.5,
        str("wing_rib_margin ", wing_rib_margin, " does not stand the rib clear of the pocket. ",
            "Past the rib's edge the wing cut lands in ", wall,
            " mm of barrel wall and goes straight through into the box -- which is exactly ",
-           "what the rework was for. This one is worth a render check: the part's genus goes ",
-           "from 3 to 5 the moment it breaks through."));
+           "what the rework was for. Do NOT test this one by the part's genus: the solid's ",
+           "own genus moves whenever the rib merges into the collar or a lid boss, so the ",
+           "number is not a fixed baseline. Test it directly -- intersect wing_pockets() ",
+           "with the interior void and it must come out empty. Facet slivers of 0 mm3 at ",
+           "r ", mm1(r_out), " are the barrel's own skin, where the slot is meant to open."));
+assert(wing_boss_gap >= 0.3,
+       str("At ", wing_angle, " deg the wing pocket's inner corner runs ",
+           mm1(-wing_boss_gap), " mm INTO the Ø", boss_d, " lid boss at r ", lid_pcd / 2,
+           ". The pipe pushes wing_angle up and the boss pushes it down, and 55 is ",
+           "most of the window: 60 costs 2.1 mm of boss. Lower wing_angle, or raise ",
+           "wing_pcd -- but wing_pcd is already pinned by wing_stow_gap."));
 assert(wing_rib_left >= 2,
        str("The wing cut is floored at r ", mm1(wing_slot_in), " and the rib starts at r ",
            wing_rib_r, ", leaving ", mm1(wing_rib_left),
@@ -442,7 +481,16 @@ echo(str("Lift-out: and at RIGHT ANGLES to that, the resting face runs forward a
          "tips the tab along the box, this one lets its outer edge come OUT of it."));
 echo(str("The whole wing cut is BLIND: floored at r ", mm1(wing_slot_in), " with ",
          mm1(wing_rib_left), " mm of rib behind it, so neither the pocket nor the slot ",
-         "opens into the box."));
+         "opens into the box. Do not check that by the part's genus -- the number moves ",
+         "when the rib merges into a boss. Intersect wing_pockets() with the interior ",
+         "void: it must be empty, bar 0 mm3 facet slivers out at r ", mm1(r_out), "."));
+echo(str("The rib carrying the screw runs r ", wing_rib_r, "..", mm1(r_out), " and stops at ",
+         mm1(wing_rib_len), " mm, ", mm1(wing_rib_len - wing_slot_back),
+         " mm behind the pocket -- it has no work to do past it. Full depth cost 13 cm3 ",
+         "and reached the socket's collar. Past it the screw's tip runs on into the ",
+         "cavity, as it does in the bought box. On the way it fuses into the Ø", boss_d,
+         " lid boss, which is why the boss survives the pocket passing ",
+         mm1(wing_boss_gap), " mm from it: the pocket clears it, the rib joins it."));
 echo(wing_stow_gap >= 0.5
      ? str("Stowed, the tab's far corner sits at r ", mm1(wing_stow_r), " -- ",
            mm1(wing_stow_gap), " mm inside the Ø", hole_saw, " hole. It goes in.")
@@ -456,8 +504,10 @@ echo(wing_stow_gap >= 0.5
            " -- which at ", wing_angle, " deg would leave the pipe bore only ",
            mm1((sqrt(pow(hole_saw / 2 - 0.5, 2) - pow(wing_plate_reach, 2))
                 - wing_plate_w / 2) * sin(wing_angle) - r_bore - wing_screw_d / 2),
-           " mm -- or move wing_angle out towards 60, where the same radius clears the bore ",
-           "by plenty."));
+           " mm -- or saw a bigger hole, which costs lip. wing_angle is NOT a way out of ",
+           "this one: the overwidth is set by wing_pcd alone. Turning the wings only buys ",
+           "the room that lets wing_pcd come down, and it runs out at 55 -- past that the ",
+           "pocket eats the lid boss."));
 echo(str("Wing slot: struck on the tab's own back radius, r ", mm1(wing_arc_r), " = half of ",
          wing_plate_w, " plus ", wing_slot_margin, ", reaching in to r ", mm1(wing_slot_in),
          " and out through the barrel, from the pocket forward to ", wing_seat_len,
@@ -552,7 +602,7 @@ module wing_rib_solid() {
     y0 = -(wing_pocket_y + wing_rib_margin);
     y1 =   wing_arc_r + wing_rib_margin;
     translate([wing_rib_r, y0, 0])
-        cube([r_out - wing_rib_r + 1, y1 - y0, box_depth]);
+        cube([r_out - wing_rib_r + 1, y1 - y0, wing_rib_len]);
 }
 
 module wing_ribs() {
