@@ -152,7 +152,6 @@ wing_slot_margin = 0.5;  // how much over half the tab's width the slot's arc is
 // of the box. A slope in front of the pocket would have pointed the wrong way
 // and fought the clamp.
 wing_fold_a      = 57;   // the slope, degrees from the box's axis (55-60)
-wing_fold_len    = 3;    // how far back it runs before it is clear of the barrel
 wing_fold_side   = -1;   // which half of the pocket is sloped: -1 = LEFT, with
                          // the box stood on its front lip and looked at from
                          // outside. +1 puts it on the other hand.
@@ -232,9 +231,20 @@ wing_slot_back = wing_slot_z + wing_slot_h;
 // that is not there.
 wing_arc_r    = wing_plate_w / 2 + wing_slot_margin;
 wing_slot_in  = wing_r - wing_arc_r;      // how far in the slot reaches
-// Where the sloped half gets to by the time it has run its length: it has to be
-// clear of the barrel, or the tab is still inside the box when it turns.
-wing_fold_out = wing_r + wing_sweep_r + wing_fold_len * tan(wing_fold_a);
+// The pocket's own frame: x radial from the screw, y tangential. The floor is
+// what makes the whole wing cut BLIND -- everything is bounded at wing_floor_x
+// and the rib carries on behind it.
+wing_floor_x  = wing_slot_in - wing_r;    // the floor, as a local x (negative)
+wing_out_x    = r_out - wing_r;           // the barrel's surface, as a local x
+wing_pocket_y = wing_plate_reach + 1;     // how far the pocket runs to its hand
+wing_ramp_run = (r_out - wing_slot_in) / tan(wing_fold_a);   // the climb's length
+wing_ledge_y  = wing_pocket_y - wing_ramp_run;               // where it starts
+wing_rib_left = wing_slot_in - wing_rib_r;   // material behind the whole cut
+// Stowed, the tab lies tangentially and its FAR CORNER is the widest thing on
+// the box -- wider than the barrel. Whether it clears the sawn hole is pure
+// Pythagoras on the pitch radius, the tab's half width and its reach.
+wing_stow_r   = sqrt(pow(wing_r + wing_plate_w / 2, 2) + pow(wing_plate_reach, 2));
+wing_stow_gap = hole_saw / 2 - wing_stow_r;
 // The board thicknesses this slot can actually clamp: the tab cannot come
 // further forward than the seat, and it starts no further back than the pocket.
 board_min     = wing_seat_len;
@@ -306,10 +316,19 @@ assert(wing_slot_in > wing_rib_r + 2,
            mm1(wing_slot_in - 2), " or less."));
 assert(wing_fold_a >= 40 && wing_fold_a <= 80,
        str("wing_fold_a ", wing_fold_a, " is not a slope a tab can climb; 55-60 is the range."));
-assert(wing_fold_out > r_out + 2,
-       str("The sloped half only reaches r ", mm1(wing_fold_out), " against a barrel of r ",
-           r_out, " -- the tab would still be inside the box when it turns. Raise ",
-           "wing_fold_len (now ", wing_fold_len, ") or wing_fold_a (now ", wing_fold_a, ")."));
+assert(wing_ledge_y > 1,
+       str("At ", wing_fold_a, " deg the ramp takes ", mm1(wing_ramp_run),
+           " mm of the pocket's ", mm1(wing_pocket_y),
+           " and leaves no resting ledge at all. Steepen wing_fold_a, or shorten the climb ",
+           "by raising wing_slot_margin."));
+assert(wing_ramp_run <= wing_pocket_y * 0.6,
+       str("The ramp is ", mm1(wing_ramp_run), " mm of a ", mm1(wing_pocket_y),
+           " mm pocket -- it was meant to be about half. Steepen wing_fold_a."));
+assert(wing_rib_left >= 2,
+       str("The wing cut is floored at r ", mm1(wing_slot_in), " and the rib starts at r ",
+           wing_rib_r, ", leaving ", mm1(wing_rib_left),
+           " mm behind it -- the pocket would break through into the box, which it must ",
+           "never do. Lower wing_rib_r to ", mm1(wing_slot_in - 2), " or less."));
 assert(board_t >= board_min && board_t <= board_max,
        str("A ", board_t, " mm board is outside what this slot can clamp (", board_min,
            "..", board_max, "). The tab cannot come forward past the seat, and it starts no ",
@@ -364,12 +383,31 @@ echo(str("Wing pocket: a ", mm1(2 * wing_sweep_r), " mm disc, ", mm1(wing_slot_h
          "is clamped tight to go into the wall. Deployed it reaches r ", mm1(wing_reach),
          ", catching ", mm1(wing_bearing), " mm of board all the way round the Ø", hole_saw,
          " hole."));
-echo(str("Fold-out: the ", wing_fold_side < 0 ? "LEFT" : "RIGHT",
-         " half of the pocket is sloped ", wing_fold_a, " deg from the axis, BEHIND the ",
-         "pocket and opening OUTWARD -- slacken the screw, the tab backs into it, and it ",
-         "turns out of the box. It clears the barrel by ", mm1(wing_fold_out - r_out),
-         " mm. (Left is with the box stood on its front lip and looked at from outside; ",
-         "wing_fold_side flips it.)"));
+echo(str("Fold-out: the pocket is on the ", wing_fold_side < 0 ? "LEFT" : "RIGHT",
+         " of the screw ONLY -- nothing at all on the other hand. Its floor is the resting ",
+         "ledge for ", mm1(wing_ledge_y), " mm, then climbs ", wing_fold_a,
+         " deg over the outer ", mm1(wing_ramp_run),
+         " mm to the barrel's own surface, and that climb is what lifts the tab OUT. (Left ",
+         "is with the box stood on its front lip and looked at from outside; wing_fold_side ",
+         "flips it.)"));
+echo(str("The whole wing cut is BLIND: floored at r ", mm1(wing_slot_in), " with ",
+         mm1(wing_rib_left), " mm of rib behind it, so neither the pocket nor the slot ",
+         "opens into the box."));
+echo(wing_stow_gap >= 0.5
+     ? str("Stowed, the tab's far corner sits at r ", mm1(wing_stow_r), " -- ",
+           mm1(wing_stow_gap), " mm inside the Ø", hole_saw, " hole. It goes in.")
+     : str("WARNING -- STOWED, THE TAB DOES NOT CLEAR THE HOLE. Its far corner is at r ",
+           mm1(wing_stow_r), " against a Ø", hole_saw, " hole of r ", mm1(hole_saw / 2),
+           ": ", mm1(-wing_stow_gap), " mm proud. Pythagoras on the pitch radius, the tab's ",
+           "half width and its reach, and it does not care which way the tab is turned. ",
+           "Either bring wing_pcd down to ",
+           mm1(2 * (sqrt(pow(hole_saw / 2 - 0.5, 2) - pow(wing_plate_reach, 2))
+                    - wing_plate_w / 2)),
+           " -- which at ", wing_angle, " deg would leave the pipe bore only ",
+           mm1((sqrt(pow(hole_saw / 2 - 0.5, 2) - pow(wing_plate_reach, 2))
+                - wing_plate_w / 2) * sin(wing_angle) - r_bore - wing_screw_d / 2),
+           " mm -- or move wing_angle out towards 60, where the same radius clears the bore ",
+           "by plenty."));
 echo(str("Wing slot: struck on the tab's own back radius, r ", mm1(wing_arc_r), " = half of ",
          wing_plate_w, " plus ", wing_slot_margin, ", reaching in to r ", mm1(wing_slot_in),
          " and out through the barrel, from the pocket forward to ", wing_seat_len,
@@ -518,36 +556,47 @@ module pilot_holes() {
 //                 the head's seat -- because the tab does not stay put. It is
 //                 drawn forward until it bears on the back of the board, and
 //                 its inner half is inside the wall the whole way.
-// One half-space, for putting the sloped half of the pocket on one hand only.
-// -1 is LEFT with the box stood on its front lip and looked at from outside:
-// the viewer's forward is -r, their up is +z, so their right is +tangential and
-// their left is the half this cuts.
-module wing_fold_half() {
-    translate([-80, wing_fold_side < 0 ? -160 : 0, -80]) cube([160, 160, 160]);
+// The pocket, drawn as one 2D profile in the screw's own frame: local x is
+// radial (outward positive), local y is tangential. It goes on ONE hand only --
+// there is nothing on the other side of the screw at all -- and it has a FLOOR
+// at wing_floor_x, so the rib stands behind it and the box is never opened to
+// the cavity. That floor is the resting ledge; over the outer half of the
+// pocket it climbs at wing_fold_a to the barrel's own surface, and that climb
+// is what lifts the tab OUT of the box as it swings.
+//
+//      y = +arc  +-------------------------+  (blends into the travel slot)
+//                |                         |
+//   the LEDGE    |  floor at wing_floor_x  |
+//                |                         |
+//    y = -ledge  +--.                      |
+//                    `--.  the RAMP        |
+//    y = -reach         `+-----------------+
+//                        ^ floor is out at the barrel's surface here
+//
+module wing_pocket_2d() {
+    polygon([[wing_floor_x,     wing_arc_r],
+             [wing_out_x + 10,  wing_arc_r],
+             [wing_out_x + 10, -wing_pocket_y],
+             [wing_out_x,      -wing_pocket_y],
+             [wing_floor_x,    -wing_ledge_y]]);
 }
 
 module wing_pockets() {
     at_wings() translate([wing_r, 0, 0]) {
-        // The rest pocket: the disc the tab turns in, and the flat front face it
-        // is pulled against when it is clamped tight for going into the wall.
-        translate([0, 0, wing_slot_z]) cylinder(h = wing_slot_h, r = wing_sweep_r);
-
-        // The sloped half, BEHIND the pocket and opening OUTWARD: slacken the
-        // screw, the tab backs into this, and the slope turns it out of the box.
-        intersection() {
-            translate([0, 0, wing_slot_back - 0.01])
-                cylinder(h = wing_fold_len + 0.01, r1 = wing_sweep_r,
-                         r2 = wing_sweep_r + wing_fold_len * tan(wing_fold_a));
-            wing_fold_half();
-        }
+        translate([0, 0, wing_slot_z - 0.01])
+            linear_extrude(height = wing_slot_h + 0.02)
+                if (wing_fold_side < 0) wing_pocket_2d();
+                else mirror([0, 1, 0]) wing_pocket_2d();
 
         // The travel slot, struck on the tab's own back radius rather than cut
-        // square: the tab is drawn forward down this to the head's seat.
+        // square: the tab is drawn forward down this to the head's seat. Its
+        // floor is the same radius as the pocket's, so the rib behind is
+        // continuous and the whole wing cut is blind.
         translate([0, 0, wing_seat_len])
             linear_extrude(height = wing_slot_back - wing_seat_len)
                 hull() {
                     circle(r = wing_arc_r);
-                    translate([r_out - wing_r + 3, 0]) circle(r = wing_arc_r);
+                    translate([wing_out_x + 3, 0]) circle(r = wing_arc_r);
                 }
     }
 }
