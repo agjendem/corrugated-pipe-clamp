@@ -127,12 +127,20 @@ wing_plate_w     = 7;    // its width (mm)
 wing_plate_t     = 2;    // its thickness (mm)
 wing_plate_reach = 11.5; // screw centre -> far tip (mm). This is what has to
                          // clear the sawn hole's edge to catch the board.
-wing_slot_z      = 28;   // the pocket's FRONT face, from the bearing face (mm).
-                         // Not from the lip: the tab has to end up behind the
-                         // board, and the lip is on the other side of it.
+wing_slot_z      = 33;   // the pocket's FRONT face where it is FLAT, from the
+                         // bearing face (mm). Not from the lip: the tab has to
+                         // end up behind the board, and the lip is on the other
+                         // side of it. It sits this far back so the slope in
+                         // front of it still clears the board -- see
+                         // wing_ramp_front below.
 wing_slot_clear  = 0.6;  // height the pocket has over the tab's thickness (mm)
 wing_rib_r       = 26;   // how far the rib carrying the screw reaches in (mm)
-wing_rib_w       = 20;   // the rib's width (mm)
+wing_rib_margin  = 2.5;  // how far the rib stands past the pocket on each side
+                         // (mm). The rib is what the whole wing cut is floored
+                         // INTO -- run the pocket past its edge and the cut
+                         // lands in a 2.5 mm wall instead and opens the box.
+                         // The rib follows the pocket's hand, so it is not
+                         // centred on the screw.
 // The tab does not stay in its pocket: tightening draws it FORWARD until it
 // bears on the back of the board, and while it does that its inner half is
 // still inside the barrel's wall. So the wall is slotted open from the pocket
@@ -145,13 +153,15 @@ wing_seat_len    = 10;   // the solid front (mm): the head's seat and the only
 wing_slot_margin = 0.5;  // how much over half the tab's width the slot's arc is
                          // cut (mm). The tab's back is rounded, so the slot is
                          // too: one radius struck from the screw's centre.
-// THE SLOPED HALF OF THE POCKET, and it goes BEHIND it, not in front. Tightening
-// pulls the tab forward and it lies flat on the pocket's front face -- that is
-// the "clamped tight" it goes into the wall in. Slacken the screw and the tab
-// backs off into this slope, which opens OUTWARD, and that is what turns it out
-// of the box. A slope in front of the pocket would have pointed the wrong way
-// and fought the clamp.
-wing_fold_a      = 57;   // the slope, degrees from the box's axis (55-60)
+// THE SLOPE TIPS THE TAB'S OUTER END FORWARD, TOWARDS THE LIP. Nothing about it
+// is radial: the pocket's floor stays at one radius the whole way across, and
+// what changes is how far FORWARD its front face reaches. Over the inner half
+// the face is flat -- that is the resting ledge the tab is pulled against when
+// it is clamped tight to go into the wall. Over the OUTER half the face runs
+// forward at wing_fold_a, and that is the room the tab's far end needs to drop
+// towards the board.
+wing_fold_a      = 55;   // the slope, degrees FROM THE BOX'S AXIS: 0 would be
+                         // along the box, 90 flat in the board's plane
 wing_fold_side   = -1;   // which half of the pocket is sloped: -1 = LEFT, with
                          // the box stood on its front lip and looked at from
                          // outside. +1 puts it on the other hand.
@@ -237,8 +247,11 @@ wing_slot_in  = wing_r - wing_arc_r;      // how far in the slot reaches
 wing_floor_x  = wing_slot_in - wing_r;    // the floor, as a local x (negative)
 wing_out_x    = r_out - wing_r;           // the barrel's surface, as a local x
 wing_pocket_y = wing_plate_reach + 1;     // how far the pocket runs to its hand
-wing_ramp_run = (r_out - wing_slot_in) / tan(wing_fold_a);   // the climb's length
-wing_ledge_y  = wing_pocket_y - wing_ramp_run;               // where it starts
+wing_ledge_y  = wing_pocket_y / 2;        // the INNER half is the resting ledge
+// The outer half runs forward instead. The angle is from the box's AXIS, so a
+// tangential run of d costs d / tan(a) of forward reach.
+wing_ramp_fwd   = (wing_pocket_y - wing_ledge_y) / tan(wing_fold_a);
+wing_ramp_front = wing_slot_z - wing_ramp_fwd;    // the furthest forward it gets
 wing_rib_left = wing_slot_in - wing_rib_r;   // material behind the whole cut
 // Stowed, the tab lies tangentially and its FAR CORNER is the widest thing on
 // the box -- wider than the barrel. Whether it clears the sawn hole is pure
@@ -316,14 +329,17 @@ assert(wing_slot_in > wing_rib_r + 2,
            mm1(wing_slot_in - 2), " or less."));
 assert(wing_fold_a >= 40 && wing_fold_a <= 80,
        str("wing_fold_a ", wing_fold_a, " is not a slope a tab can climb; 55-60 is the range."));
-assert(wing_ledge_y > 1,
-       str("At ", wing_fold_a, " deg the ramp takes ", mm1(wing_ramp_run),
-           " mm of the pocket's ", mm1(wing_pocket_y),
-           " and leaves no resting ledge at all. Steepen wing_fold_a, or shorten the climb ",
-           "by raising wing_slot_margin."));
-assert(wing_ramp_run <= wing_pocket_y * 0.6,
-       str("The ramp is ", mm1(wing_ramp_run), " mm of a ", mm1(wing_pocket_y),
-           " mm pocket -- it was meant to be about half. Steepen wing_fold_a."));
+assert(wing_ramp_front >= board_t + 1.5,
+       str("The slope runs forward to ", mm1(wing_ramp_front), " and the board owns 0..",
+           board_t, " -- it would open the barrel inside the wall. Move the pocket back: ",
+           "wing_slot_z at least ", mm1(board_t + 1.5 + wing_ramp_fwd),
+           ", or steepen wing_fold_a (now ", wing_fold_a, " deg from the axis)."));
+assert(wing_rib_margin >= 1.5,
+       str("wing_rib_margin ", wing_rib_margin, " does not stand the rib clear of the pocket. ",
+           "Past the rib's edge the wing cut lands in ", wall,
+           " mm of barrel wall and goes straight through into the box -- which is exactly ",
+           "what the rework was for. This one is worth a render check: the part's genus goes ",
+           "from 3 to 5 the moment it breaks through."));
 assert(wing_rib_left >= 2,
        str("The wing cut is floored at r ", mm1(wing_slot_in), " and the rib starts at r ",
            wing_rib_r, ", leaving ", mm1(wing_rib_left),
@@ -384,12 +400,14 @@ echo(str("Wing pocket: a ", mm1(2 * wing_sweep_r), " mm disc, ", mm1(wing_slot_h
          ", catching ", mm1(wing_bearing), " mm of board all the way round the Ø", hole_saw,
          " hole."));
 echo(str("Fold-out: the pocket is on the ", wing_fold_side < 0 ? "LEFT" : "RIGHT",
-         " of the screw ONLY -- nothing at all on the other hand. Its floor is the resting ",
-         "ledge for ", mm1(wing_ledge_y), " mm, then climbs ", wing_fold_a,
-         " deg over the outer ", mm1(wing_ramp_run),
-         " mm to the barrel's own surface, and that climb is what lifts the tab OUT. (Left ",
-         "is with the box stood on its front lip and looked at from outside; wing_fold_side ",
-         "flips it.)"));
+         " of the screw ONLY -- nothing at all on the other hand. Its front face is FLAT for ",
+         "the inner ", mm1(wing_ledge_y), " mm (the resting ledge the tab is pulled against), ",
+         "then over the outer ", mm1(wing_pocket_y - wing_ledge_y), " mm it runs FORWARD at ",
+         wing_fold_a, " deg from the box's axis, reaching ", mm1(wing_ramp_front),
+         " -- ", mm1(wing_ramp_front - board_t),
+         " mm clear of the board. Nothing here is radial: the floor stays at r ",
+         mm1(wing_slot_in), " the whole way across. (Left is with the box stood on its front ",
+         "lip and looked at from outside; wing_fold_side flips it.)"));
 echo(str("The whole wing cut is BLIND: floored at r ", mm1(wing_slot_in), " with ",
          mm1(wing_rib_left), " mm of rib behind it, so neither the pocket nor the slot ",
          "opens into the box."));
@@ -494,10 +512,23 @@ module lid_bosses() {
     }
 }
 
+// The rib is what the wing cut is floored into, so it has to be WIDER than the
+// pocket on both hands -- and since the pocket is on one hand only, the rib is
+// not centred on the screw either. Past its edge the cut would land in 2.5 mm
+// of barrel wall and go straight through into the box.
+module wing_rib_solid() {
+    y0 = -(wing_pocket_y + wing_rib_margin);
+    y1 =   wing_arc_r + wing_rib_margin;
+    translate([wing_rib_r, y0, 0])
+        cube([r_out - wing_rib_r + 1, y1 - y0, box_depth]);
+}
+
 module wing_ribs() {
     intersection() {
-        at_wings() translate([wing_rib_r, -wing_rib_w / 2, 0])
-            cube([r_out - wing_rib_r + 1, wing_rib_w, box_depth]);
+        at_wings() {
+            if (wing_fold_side < 0) wing_rib_solid();
+            else mirror([0, 1, 0]) wing_rib_solid();
+        }
         envelope();
     }
 }
@@ -573,20 +604,40 @@ module pilot_holes() {
 //    y = -reach         `+-----------------+
 //                        ^ floor is out at the barrel's surface here
 //
+// The profile is in (tangential, axial): y across the pocket, z along the box.
+// It is extruded RADIALLY, from the floor out through the barrel, so the floor
+// sits at one radius the whole way and the only thing that varies is how far
+// forward the front face reaches.
+//
+//        y = +arc        y = -ledge          y = -reach
+//            |               |                   |
+//   back  ---+---------------+-------------------+---   z = wing_slot_back
+//            |                                   |
+//   front ---+---------------+.                  |      z = wing_slot_z
+//                              `--.  55 deg      |
+//                                   `------------+      z = wing_ramp_front
+//            |<- resting ledge ->|<- the slope ->|
+//
 module wing_pocket_2d() {
-    polygon([[wing_floor_x,     wing_arc_r],
-             [wing_out_x + 10,  wing_arc_r],
-             [wing_out_x + 10, -wing_pocket_y],
-             [wing_out_x,      -wing_pocket_y],
-             [wing_floor_x,    -wing_ledge_y]]);
+    polygon([[ wing_arc_r,     wing_slot_z],
+             [ wing_arc_r,     wing_slot_back],
+             [-wing_pocket_y,  wing_slot_back],
+             [-wing_pocket_y,  wing_ramp_front],
+             [-wing_ledge_y,   wing_slot_z]]);
+}
+
+module wing_pocket_solid() {
+    // rotate([90,0,90]) sends a linear_extrude's (p, q, t) to (t, p, q): the
+    // profile lands in (y, z) and the extrusion runs radially.
+    translate([wing_floor_x, 0, 0]) rotate([90, 0, 90])
+        linear_extrude(height = wing_out_x + 10 - wing_floor_x)
+            wing_pocket_2d();
 }
 
 module wing_pockets() {
     at_wings() translate([wing_r, 0, 0]) {
-        translate([0, 0, wing_slot_z - 0.01])
-            linear_extrude(height = wing_slot_h + 0.02)
-                if (wing_fold_side < 0) wing_pocket_2d();
-                else mirror([0, 1, 0]) wing_pocket_2d();
+        if (wing_fold_side < 0) wing_pocket_solid();
+        else mirror([0, 1, 0]) wing_pocket_solid();
 
         // The travel slot, struck on the tab's own back radius rather than cut
         // square: the tab is drawn forward down this to the head's seat. Its
