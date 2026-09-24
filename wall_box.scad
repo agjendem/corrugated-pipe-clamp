@@ -169,7 +169,7 @@ wing_fold_a      = 55;   // the slope, degrees FROM THE BOX'S AXIS: 0 would be
 // millimetres before the barrel's surface the resting face runs forward, so the
 // tab's outer edge has somewhere to go as it lifts out.
 wing_lift        = 3.5;  // how far in from the outer wall it starts (mm), 3-4
-wing_lift_a      = 45;   // its angle in the radial-axial plane (deg)
+wing_lift_a      = 55;   // its angle in the radial-axial plane (deg)
 wing_fold_side   = -1;   // which half of the pocket is sloped: -1 = LEFT, with
                          // the box stood on its front lip and looked at from
                          // outside. +1 puts it on the other hand.
@@ -411,7 +411,14 @@ echo(str("Wings: Ø", wing_pcd, " pitch circle at ", wing_angle, " deg off the p
          wing_head_d, " head sits in the wall, not in the ", lip_t,
          " mm lip. It is let in ", mm1(wing_head_z), " mm (", mm1(wing_cs_depth),
          " of countersink plus ", wing_head_sink, " of counterbore). The screw passes ",
-         mm1(gap_to_bore), " mm from the pipe bore."));
+         mm1(gap_to_bore), " mm from the pipe bore",
+         gap_to_collar >= 0
+           ? str(" and ", mm1(gap_to_collar), " mm from the socket's collar.")
+           : str(". It also grazes the socket's COLLAR by ", mm1(-gap_to_collar),
+                 " mm, thinning that wall from ", collar_wall, " to ",
+                 mm1(collar_wall + gap_to_collar),
+                 " over the stretch where they overlap. The bore itself is untouched -- that ",
+                 "is what gap_to_bore guards -- but it is worth knowing.")));
 echo(str("Wing pocket: a ", mm1(2 * wing_sweep_r), " mm disc, ", mm1(wing_slot_h),
          " mm tall, front face ", wing_slot_z, " mm in -- ", mm1(wing_slot_z - board_t),
          " mm behind the board, which is what makes the tab open in the cavity and not in ",
