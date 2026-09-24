@@ -133,6 +133,21 @@ wing_slot_z      = 28;   // the pocket's FRONT face, from the bearing face (mm).
 wing_slot_clear  = 0.6;  // height the pocket has over the tab's thickness (mm)
 wing_rib_r       = 27;   // how far the rib carrying the screw reaches in (mm)
 wing_rib_w       = 20;   // the rib's width (mm)
+// The tab does not stay in its pocket: tightening draws it FORWARD until it
+// bears on the back of the board, and while it does that its inner half is
+// still inside the barrel's wall. So the wall is slotted open from the pocket
+// all the way to the head's seat, and how far forward the slot reaches is what
+// decides the thinnest board the box can clamp.
+wing_seat_len    = 10;   // the solid front (mm): the head's seat and the only
+                         // length of screw the box guides. The slot opens
+                         // square at the end of it -- no ramp, or a thin board
+                         // would sit the tab on a slope instead of flat.
+wing_slot_w      = 8;    // the open slot's width (mm); the tab is 7
+wing_slot_r      = 31;   // the slot's floor, as a radius (mm). It has to clear
+                         // the stub of tab on the far side of the screw.
+wing_fold_cham   = 2;    // a 45 deg lead-out round the pocket's front edge (mm),
+                         // so the tab can turn out of the pocket and into the
+                         // slot instead of catching on a square lip
 
 /* [Anti-rotation -- what stops the box turning in a sawn hole] */
 ar_count = 10;   // how many strips round the box
@@ -200,6 +215,14 @@ wing_bearing  = wing_reach - hole_saw / 2;    // how much board it catches
 // head standing proud of the rim. wing_head_sink buries it further.
 wing_cs_depth = (wing_head_d - wing_screw_d) / 2;
 wing_head_z   = wing_head_sink + wing_cs_depth;
+// The stub of tab on the far side of the screw -- what the slot's floor has to
+// clear as the tab travels forward.
+wing_stub     = wing_plate_l - wing_plate_reach;
+wing_slot_back = wing_slot_z + wing_slot_h;
+// The board thicknesses this slot can actually clamp: the tab cannot come
+// further forward than the seat, and it starts no further back than the pocket.
+board_min     = wing_seat_len;
+board_max     = wing_slot_z;
 
 // ── Derived: the anti-rotation strips ───────────────────────────────────────
 ar_fade = atan(ar_len / ar_h);   // how shallow the taper is, from the surface
@@ -251,6 +274,27 @@ assert(wing_r + wing_sweep_r > r_out,
 assert(wing_plate_reach < wing_plate_l,
        str("The tab is ", wing_plate_l, " long but reaches ", wing_plate_reach,
            " from its screw -- measure it again; the hole cannot be outside the tab."));
+assert(wing_seat_len >= wing_head_z + 3,
+       str("wing_seat_len ", wing_seat_len, " leaves only ",
+           mm1(wing_seat_len - wing_head_z),
+           " mm of screw guided past the head. Raise it to at least ",
+           mm1(wing_head_z + 3), "."));
+assert(wing_slot_r <= wing_r - wing_stub - 0.5,
+       str("The slot's floor at r ", wing_slot_r, " does not clear the ", mm1(wing_stub),
+           " mm of tab on the far side of the screw -- it would jam on its way forward. ",
+           "Lower wing_slot_r to ", mm1(wing_r - wing_stub - 0.5), " or less."));
+assert(wing_slot_r > wing_rib_r + 2,
+       str("The slot's floor at r ", wing_slot_r, " is into the rib that carries the screw (r ",
+           wing_rib_r, "). Lower wing_rib_r, or raise wing_slot_r."));
+assert(wing_slot_w >= wing_plate_w + 0.5,
+       str("The slot is ", wing_slot_w, " wide and the tab ", wing_plate_w,
+           " -- it will bind. Raise wing_slot_w to at least ", wing_plate_w + 0.5, "."));
+assert(board_t >= board_min && board_t <= board_max,
+       str("A ", board_t, " mm board is outside what this slot can clamp (", board_min,
+           "..", board_max, "). The tab cannot come forward past the seat, and it starts no ",
+           "further back than the pocket. Move wing_seat_len or wing_slot_z."));
+assert(wing_fold_cham > 0 && wing_fold_cham < wing_sweep_r / 2,
+       "wing_fold_cham has to be a lead-out, not the whole pocket");
 assert(wing_r - wing_screw_d / 2 > wing_rib_r + 1,
        str("The wing screw at r ", wing_r, " is not carried by the rib (r ", wing_rib_r,
            " outward). Lower wing_rib_r."));
@@ -297,10 +341,20 @@ echo(str("Wings: Ø", wing_pcd, " pitch circle at ", wing_angle, " deg off the p
 echo(str("Wing pocket: a ", mm1(2 * wing_sweep_r), " mm disc, ", mm1(wing_slot_h),
          " mm tall, front face ", wing_slot_z, " mm in -- ", mm1(wing_slot_z - board_t),
          " mm behind the board, which is what makes the tab open in the cavity and not in ",
-         "the wall. Deployed it reaches r ", mm1(wing_reach), ", catching ", mm1(wing_bearing),
-         " mm of board all the way round the Ø", hole_saw, " hole. The screw needs ",
-         mm1(wing_slot_z + wing_slot_h), " mm to reach it, of the ", wing_screw_len,
-         " it has."));
+         "the wall, with a ", wing_fold_cham, " mm 45 deg lead-out round its front edge so ",
+         "the tab can turn out of it. Deployed it reaches r ", mm1(wing_reach), ", catching ",
+         mm1(wing_bearing), " mm of board all the way round the Ø", hole_saw, " hole."));
+echo(str("Wing slot: open, ", wing_slot_w, " mm wide, floor at r ", wing_slot_r,
+         ", running from the pocket forward to ", wing_seat_len,
+         " -- because the tab travels FORWARD as it tightens and its inner half is inside ",
+         "the wall the whole way. The front ", wing_seat_len,
+         " mm stays solid: that is the head's seat (let in ", mm1(wing_head_z),
+         ") and the only length of screw the box guides."));
+echo(str("So this slot clamps boards from ", board_min, " to ", board_max,
+         " mm. A 12 leaves ", 12 - board_min, " mm of margin, a 25 leaves ", 25 - board_min,
+         ". Yours is ", board_t, ", which leaves ", board_t - board_min,
+         ". Of the screw's ", wing_screw_len, " mm, ", mm1(wing_slot_back),
+         " is spent getting to the back of the pocket."));
 echo(str("Anti-rotation: ", ar_count, " strips of ", ar_h, " x ", ar_w,
          " under the lip, fading out over ", ar_len, " mm -- so they stand Ø",
          mm1(body_od + 2 * ar_h), " at the lip, which is a press into a Ø", hole_saw,
@@ -427,9 +481,26 @@ module pilot_holes() {
 // turned 90 degrees it points straight out past the sawn hole's edge and has
 // the board's back face to pull against. So the pocket is the disc it sweeps
 // through -- and it has to break out through the barrel, or the tab is trapped.
+// Three cuts that are one feature.
+//
+//   the POCKET    the disc the tab turns in, at the back
+//   the LEAD-OUT  a 45 degree edge round the pocket's front, so the tab turns
+//                 out of it instead of catching on a square lip
+//   the SLOT      open, full depth, from the lead-out all the way forward to
+//                 the head's seat -- because the tab does not stay put. It is
+//                 drawn forward until it bears on the back of the board, and
+//                 its inner half is inside the wall the whole way.
 module wing_pockets() {
-    at_wings() translate([wing_r, 0, wing_slot_z])
-        cylinder(h = wing_slot_h, r = wing_sweep_r);
+    at_wings() {
+        translate([wing_r, 0, wing_slot_z]) {
+            cylinder(h = wing_slot_h, r = wing_sweep_r);
+            translate([0, 0, -wing_fold_cham])
+                cylinder(h = wing_fold_cham + 0.01,
+                         r1 = wing_sweep_r - wing_fold_cham, r2 = wing_sweep_r);
+        }
+        translate([wing_slot_r, -wing_slot_w / 2, wing_seat_len])
+            cube([r_out - wing_slot_r + 2, wing_slot_w, wing_slot_back - wing_seat_len]);
+    }
 }
 
 // The screw: shank the whole way to where the tab sits and a little past, then
