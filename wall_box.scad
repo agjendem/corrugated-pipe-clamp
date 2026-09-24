@@ -162,6 +162,14 @@ wing_slot_margin = 0.5;  // how much over half the tab's width the slot's arc is
 // towards the board.
 wing_fold_a      = 55;   // the slope, degrees FROM THE BOX'S AXIS: 0 would be
                          // along the box, 90 flat in the board's plane
+// AND A SECOND SLOPE AT RIGHT ANGLES TO THAT ONE. The first tips the tab's
+// outer end forward in the plane along the box; on its own it does nothing to
+// get the tab OUT of the box, because the pocket's floor is at one radius the
+// whole way across. This one is the radial half of the job: over the last few
+// millimetres before the barrel's surface the resting face runs forward, so the
+// tab's outer edge has somewhere to go as it lifts out.
+wing_lift        = 3.5;  // how far in from the outer wall it starts (mm), 3-4
+wing_lift_a      = 45;   // its angle in the radial-axial plane (deg)
 wing_fold_side   = -1;   // which half of the pocket is sloped: -1 = LEFT, with
                          // the box stood on its front lip and looked at from
                          // outside. +1 puts it on the other hand.
@@ -252,6 +260,11 @@ wing_ledge_y  = wing_pocket_y / 2;        // the INNER half is the resting ledge
 // tangential run of d costs d / tan(a) of forward reach.
 wing_ramp_fwd   = (wing_pocket_y - wing_ledge_y) / tan(wing_fold_a);
 wing_ramp_front = wing_slot_z - wing_ramp_fwd;    // the furthest forward it gets
+// The radial flare, at right angles to that one: it starts wing_lift in from the
+// barrel's surface and runs forward as it goes out.
+wing_lift_x0    = wing_out_x - wing_lift;
+wing_lift_fwd   = wing_lift * tan(wing_lift_a);
+wing_lift_front = wing_slot_z - wing_lift_fwd;
 wing_rib_left = wing_slot_in - wing_rib_r;   // material behind the whole cut
 // Stowed, the tab lies tangentially and its FAR CORNER is the widest thing on
 // the box -- wider than the barrel. Whether it clears the sawn hole is pure
@@ -329,6 +342,13 @@ assert(wing_slot_in > wing_rib_r + 2,
            mm1(wing_slot_in - 2), " or less."));
 assert(wing_fold_a >= 40 && wing_fold_a <= 80,
        str("wing_fold_a ", wing_fold_a, " is not a slope a tab can climb; 55-60 is the range."));
+assert(wing_lift > 1 && wing_lift < wing_plate_w,
+       str("wing_lift ", wing_lift, " should be a few mm -- enough of the resting face to ",
+           "lift the tab's outer edge, and less than the tab is wide (", wing_plate_w, ")."));
+assert(wing_lift_front >= board_t + 1.5,
+       str("The radial flare runs forward to ", mm1(wing_lift_front), " and the board owns 0..",
+           board_t, ". Cut wing_lift (now ", wing_lift, "), shallow wing_lift_a (now ",
+           wing_lift_a, "), or move the pocket back."));
 assert(wing_ramp_front >= board_t + 1.5,
        str("The slope runs forward to ", mm1(wing_ramp_front), " and the board owns 0..",
            board_t, " -- it would open the barrel inside the wall. Move the pocket back: ",
@@ -405,9 +425,14 @@ echo(str("Fold-out: the pocket is on the ", wing_fold_side < 0 ? "LEFT" : "RIGHT
          "then over the outer ", mm1(wing_pocket_y - wing_ledge_y), " mm it runs FORWARD at ",
          wing_fold_a, " deg from the box's axis, reaching ", mm1(wing_ramp_front),
          " -- ", mm1(wing_ramp_front - board_t),
-         " mm clear of the board. Nothing here is radial: the floor stays at r ",
-         mm1(wing_slot_in), " the whole way across. (Left is with the box stood on its front ",
-         "lip and looked at from outside; wing_fold_side flips it.)"));
+         " mm clear of the board. (Left is with the box stood on its front lip and looked at ",
+         "from outside; wing_fold_side flips it.)"));
+echo(str("Lift-out: and at RIGHT ANGLES to that, the resting face runs forward again over the ",
+         "last ", wing_lift, " mm before the barrel's surface, at ", wing_lift_a,
+         " deg -- from r ", mm1(wing_r + wing_lift_x0), " out to r ", r_out, ", reaching ",
+         mm1(wing_lift_front), " (", mm1(wing_lift_front - board_t),
+         " mm clear of the board). That is the half of the job the first slope cannot do: it ",
+         "tips the tab along the box, this one lets its outer edge come OUT of it."));
 echo(str("The whole wing cut is BLIND: floored at r ", mm1(wing_slot_in), " with ",
          mm1(wing_rib_left), " mm of rib behind it, so neither the pocket nor the slot ",
          "opens into the box."));
@@ -634,10 +659,39 @@ module wing_pocket_solid() {
             wing_pocket_2d();
 }
 
+// The second slope, at right angles to the first. Profile in (radial, axial),
+// swept tangentially across the pocket: the resting face runs forward over the
+// last wing_lift before the barrel's surface, and stays there outboard of it.
+//
+//        r = lift_x0        r = barrel
+//            |                  |
+//   back  ---+------------------+-----   z = wing_slot_back
+//            |
+//   front ---+.                             z = wing_slot_z  (resting face)
+//              `--. 45 deg
+//                  `-----------+-----   z = wing_lift_front
+//
+module wing_lift_2d() {
+    polygon([[wing_lift_x0,     wing_slot_z],
+             [wing_out_x,       wing_lift_front],
+             [wing_out_x + 10,  wing_lift_front],
+             [wing_out_x + 10,  wing_slot_back],
+             [wing_lift_x0,     wing_slot_back]]);
+}
+
+module wing_lift_solid() {
+    // rotate([90,0,0]) sends (p, q, t) to (p, -t, q): the profile lands in
+    // (x, z) and the sweep runs tangentially, from the pocket's near edge to
+    // its far one.
+    translate([0, wing_arc_r, 0]) rotate([90, 0, 0])
+        linear_extrude(height = wing_pocket_y + wing_arc_r)
+            wing_lift_2d();
+}
+
 module wing_pockets() {
     at_wings() translate([wing_r, 0, 0]) {
-        if (wing_fold_side < 0) wing_pocket_solid();
-        else mirror([0, 1, 0]) wing_pocket_solid();
+        if (wing_fold_side < 0) { wing_pocket_solid(); wing_lift_solid(); }
+        else mirror([0, 1, 0]) { wing_pocket_solid(); wing_lift_solid(); }
 
         // The travel slot, struck on the tab's own back radius rather than cut
         // square: the tab is drawn forward down this to the head's seat. Its
