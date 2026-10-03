@@ -9,10 +9,10 @@
 //      tube_od 50, wall 2
 //     +--+                  +--+     ---
 //     |  |                  |  |      |
-//     |  |   <- the tube    |  |      |  tube_len 25
+//     |  |   <- the tube    |  |      |  tube_len 45
 //     |  |                  |  |      |
-//    ++--++----------------++--++    -+-  the collar: flat underneath,
-//    |                          |     |   Ø52, so it catches on the panel
+//   +-+--+------------------+--+-+   -+-  the collar: flat underneath,
+//   |                            |    |   Ø54, so it catches on the panel
 //    ===========+==+=============    ---  cabinet panel, Ø50 hole
 //               |  |
 //               |==|  <- the thread, through the hole
@@ -30,12 +30,13 @@
 //  the tube side or inside the bore; the face that meets the panel is a plain
 //  flat annulus, or the part rocks on a chamfer instead of bedding on the
 //  panel. What it hangs on is the ring between the hole and the collar's rim --
-//  `collar_over / 2` all round, which at the default Ø52 on a Ø50 hole is ONE
-//  MILLIMETRE. That is thin, and it is echoed on every render for a reason: it
-//  assumes the hole is drilled at size. Drill it 51 and half the ring is gone.
-//  If you have the room, `panel_spigot_wide` gives it 2 mm instead.
+//  `collar_over / 2` all round, which at the default Ø54 on a Ø50 hole is TWO
+//  MILLIMETRES. It used to be one, at Ø52, and that was thin: it assumed the
+//  hole was drilled at size, and drill it 51 and half the ring was gone. The
+//  printed part bore that out, and asked for more to push against. It is still
+//  echoed on every render, and it still assumes a hole near size.
 //
-//  THE ROOT OF THE TUBE IS THICKENED FROM THE INSIDE. A Ø50 tube standing 25 mm
+//  THE ROOT OF THE TUBE IS THICKENED FROM THE INSIDE. A Ø50 tube standing 45 mm
 //  proud is a cantilever, and the place it breaks is where it meets the collar.
 //  The bore has to step down there anyway -- the tube carries Ø46, the thread
 //  can only carry Ø41 with `neck_wall` left at its root -- so that step is made
@@ -55,7 +56,10 @@
 //
 //  So `root_cone` is the cone's own length and is free to climb into the tube,
 //  and the collar's chamfer is free to be taller than it is deep. At the
-//  defaults that is 22.6 degrees inside and 26.6 outside. Both are derived and
+//  defaults that is 19.7 degrees inside and 33.7 outside -- the outside went up
+//  from 26.6 when the collar went to Ø54, because the chamfer now has 2 mm to
+//  cross instead of 1, and the collar went to 4 mm thick so it could do that
+//  without reaching 45 or leaving a flat ledge. Both are derived and
 //  echoed below, and an assert refuses to export a part that asks for more than
 //  40 -- the rule of thumb with something left over, because the printer meets
 //  this on top of a shell and not on solid ground. The wall helps twice over: a
@@ -70,29 +74,36 @@ part = "body";  // ["body":the part, "print":as it goes on the bed, "section":cu
 /* [The tube] */
 tube_od  = 50;    // outside Ø of the tube (mm)
 wall     = 2;     // its wall (mm). Two things want it thick and neither is
-                  // strength alone: it is a 25 mm tall free-standing shell while
+                  // strength alone: it is a 45 mm tall free-standing shell while
                   // it prints, and every millimetre of it is a millimetre the
                   // root cone does not have to fall. 2 mm is also five lines of
                   // a 0.4 nozzle, where 1.5 was three and a half -- two
                   // perimeters and a ribbon of gap fill up the whole tube.
-root_cone = 6;    // how far the bore's funnel climbs from the panel face (mm).
+root_cone = 7;    // how far the bore's funnel climbs from the panel face (mm).
                   // It must clear the collar; what is left over thickens the
-                  // tube's root. This is what sets the overhang at the
-                  // transition -- see the note above, and the echo below.
-tube_len = 25;    // how far the tube stands proud of the collar (mm). This is
+                  // tube's root -- 3 mm of it past the 4 mm collar. This is what
+                  // sets the overhang at the transition -- see the note above,
+                  // and the echo below.
+tube_len = 45;    // how far the tube stands proud of the collar (mm). This is
                   // the TUBE, not the part: the collar and the thread add to it,
-                  // and the overall length is echoed below.
+                  // and the overall length is echoed below. It was 25, which
+                  // printed fine and was too short in use.
 
 /* [The collar -- the ring it hangs on] */
-collar_over = 2;  // how much bigger than the tube the collar's Ø is (mm). Half
-                  // of it, all round, is the ring that bears on the panel.
-collar_t    = 3;  // its thickness (mm). Flat underneath, always.
-collar_blend = 1; // how deep the chamfer where the collar meets the tube cuts,
+collar_over = 4;  // how much bigger than the tube the collar's Ø is (mm). Half
+                  // of it, all round, is the ring that bears on the panel: 2 mm
+                  // at Ø54. It was 2 (Ø52, a 1 mm ring) -- too little to push on.
+collar_t    = 4;  // its thickness (mm). Flat underneath, always. 4 because the
+                  // chamfer below has 2 mm to cross to reach the tube, and over
+                  // the 3 mm it gets here that is 33.7 degrees; at 3 mm thick it
+                  // would get 2 mm of height and be 45 again.
+collar_blend = 2; // how deep the chamfer where the collar meets the tube cuts,
                   // on the TUBE side only (mm); 0 = a square ledge. Never on
                   // the bearing face. It is TALLER than it is deep -- it gets
                   // all of collar_t bar the millimetre of straight wall that
                   // keeps the bearing face flat -- so it is not a 45 degree
-                  // ledge hanging over the tube.
+                  // ledge hanging over the tube. At collar_over / 2 it reaches
+                  // the tube; anything less leaves a flat ledge, echoed below.
 
 /* [Cabinet panel] */
 hole_diameter   = 50;  // the hole in the panel (mm) -- the same one the corner
@@ -221,7 +232,7 @@ assert(root_cone <= collar_t + tube_len - 2,
            "mouth. Shorten it, or lengthen the tube."));
 // 45 degrees is the angle the FIRST print of this part failed at, so the bound
 // is 40: the rule of thumb with something left over, because the printer meets
-// this overhang on top of a shell 25 mm tall and not on solid ground.
+// this overhang on top of a shell `tube_len` tall and not on solid ground.
 assert(worst_slope <= 40,
        str("The transition from tube to thread overhangs ", mm1(worst_slope),
            " degrees from vertical. Past 40 it is being asked to carry itself on top of a ",
@@ -366,9 +377,9 @@ module body_section() {
 //
 // So the transition is printed as an overhang either way, and the answer is the
 // angle, not supports: `root_cone` inside and a tall `collar_blend` outside keep
-// it near 27 degrees from vertical, where it carries itself. What is left to get
-// right is the tube, which is a free-standing shell 25 mm tall on a ring of a
-// footprint: print it with a brim, and slow down before the collar.
+// it at or under 34 degrees from vertical, where it carries itself. What is left
+// to get right is the tube, which is a free-standing shell 45 mm tall on a ring
+// of a footprint: print it with a brim, and slow down before the collar.
 module body_print() {
     translate([0, 0, collar_t + tube_len]) rotate([180, 0, 0]) body();
 }

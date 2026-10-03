@@ -1,46 +1,63 @@
 {
   "parameterSets": {
-    "panel_spigot": {
-      "part": "body"
-    },
-    "panel_spigot_print": {
-      "part": "print"
-    },
-    "panel_spigot_50": {
+    "panel_spigot_od50_l45_c54": {
       "part": "body",
-      "tube_len": "50"
+      "tube_od": "50",
+      "tube_len": "45",
+      "collar_over": "4"
     },
-    "panel_spigot_50_print": {
+    "panel_spigot_od50_l45_c54_print": {
       "part": "print",
-      "tube_len": "50"
+      "tube_od": "50",
+      "tube_len": "45",
+      "collar_over": "4"
     },
-    "panel_spigot_od495": {
+    "panel_spigot_od50_l50_c54": {
+      "part": "body",
+      "tube_od": "50",
+      "tube_len": "50",
+      "collar_over": "4"
+    },
+    "panel_spigot_od50_l50_c54_print": {
+      "part": "print",
+      "tube_od": "50",
+      "tube_len": "50",
+      "collar_over": "4"
+    },
+    "panel_spigot_od495_l45_c54": {
       "part": "body",
       "tube_od": "49.5",
-      "collar_over": "2.5",
-      "collar_blend": "1.25"
+      "tube_len": "45",
+      "collar_over": "4.5",
+      "collar_blend": "2.25"
     },
-    "panel_spigot_od495_print": {
+    "panel_spigot_od495_l45_c54_print": {
       "part": "print",
       "tube_od": "49.5",
-      "collar_over": "2.5",
-      "collar_blend": "1.25"
+      "tube_len": "45",
+      "collar_over": "4.5",
+      "collar_blend": "2.25"
     },
-    "panel_spigot_thin": {
+    "panel_spigot_od50_l45_c54_thin": {
       "part": "body",
+      "tube_od": "50",
+      "tube_len": "45",
+      "collar_over": "4",
       "wall": "1"
     },
-    "panel_spigot_stout": {
+    "panel_spigot_od50_l45_c54_stout": {
       "part": "body",
+      "tube_od": "50",
+      "tube_len": "45",
+      "collar_over": "4",
       "wall": "2.5"
     },
-    "panel_spigot_stout_print": {
+    "panel_spigot_od50_l45_c54_stout_print": {
       "part": "print",
+      "tube_od": "50",
+      "tube_len": "45",
+      "collar_over": "4",
       "wall": "2.5"
-    },
-    "panel_spigot_wide": {
-      "part": "body",
-      "collar_over": "4"
     },
     "panel_spigot_nut": {
       "part": "nut"
@@ -59,10 +76,12 @@
       "nut_grip": "0",
       "nut_grip_depth": "1.0"
     },
-    "panel_spigot_hole60": {
+    "panel_spigot_od60_l45_c64_hole60": {
       "part": "body",
       "hole_diameter": "60",
       "tube_od": "60",
+      "tube_len": "45",
+      "collar_over": "4",
       "outlet_bore": "50"
     },
     "panel_spigot_nut_hole60": {

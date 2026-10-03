@@ -488,11 +488,11 @@ Three things are worth knowing before you print one:
 - **The collar is flat underneath, always.** Whatever is done for strength happens on the
   tube side or inside the bore. Chamfer the face that meets the panel and the part rocks on
   the chamfer instead of bedding on the panel.
-- **That ring is 1 mm wide.** `collar_over` is the collar's Ø *over the tube's*, so half of
-  it, all round, is what bears on the panel — 1 mm at the Ø52 default, and that assumes the
-  hole is drilled at size. Drill it Ø51 and half the ring is gone. `panel_spigot_wide` gives
-  it 2 mm. The figure is echoed on every render.
-- **The root of the tube is thickened from the inside.** A Ø50 tube standing 25 mm proud is
+- **That ring is 2 mm wide.** `collar_over` is the collar's Ø *over the tube's*, so half of
+  it, all round, is what bears on the panel — 2 mm at the Ø54 default. It used to be 1 mm at
+  Ø52, which assumed the hole was drilled at size (drill it Ø51 and half the ring was gone),
+  and the printed part asked for more to push against. The figure is echoed on every render.
+- **The root of the tube is thickened from the inside.** A Ø50 tube standing 45 mm proud is
   a cantilever and it breaks where it meets the collar. The bore has to step from the tube's
   Ø46 down to the thread's Ø41 there anyway, so the step is a cone rather than a shoulder:
   the fillet at the root and the funnel that keeps a cable off the edge, for free. How *long*
@@ -511,7 +511,7 @@ The first print of this part failed in the transition from the tube to the threa
 kept failing with supports switched on. It was not a support problem — it was an angle
 problem, and measuring the exported mesh said so plainly:
 
-| | Then | Now |
+| | First print | Second print |
 |---|---:|---:|
 | Root cone, inside (Ø46 → Ø41) | **45.0°** from vertical | **22.6°** |
 | Collar shoulder, outside (Ø50 → Ø52) | **45.0°** | **26.6°** |
@@ -529,13 +529,13 @@ generates nothing, and what it would generate has to grow 25 mm up the inside of
 
 Three things fix it, and none of them is a support setting:
 
-- **`root_cone`** is the cone's own length, no longer tied to `collar_t`. At the default 6 mm
+- **`root_cone`** is the cone's own length, no longer tied to `collar_t`. At 6 mm
   it crosses the 3 mm collar and climbs 3 mm on into the tube, which is both a gentler angle
   and a longer fillet at the root of the cantilever.
 - **`wall` is 2 mm**, not 1.5. It helps twice: a thicker tube has a smaller bore, so the cone
   has less radius to fall — and 2 mm is five lines of a 0.4 nozzle, where 1.5 mm was three
   and a half, i.e. two perimeters and a ribbon of gap fill up the whole 25 mm shell.
-  `panel_spigot_stout` gives it 2.5 mm.
+  `panel_spigot_od50_l45_c54_stout` gives it 2.5 mm.
 - **`collar_blend` is taller than it is deep.** It gets all of `collar_t` bar the millimetre
   of straight wall that keeps the bearing face flat, so the shoulder is 27° and not 45°.
 
@@ -544,23 +544,49 @@ export a spigot whose transition overhangs more than 40° from vertical.
 
 ### A Ø49.5 tube, on the same screw
 
-`panel_spigot_od495` is the same part with the tube turned down half a millimetre, for when
-something has to slide over it or into it and Ø50 on Ø50 is no fit at all. **The screw is
-untouched** — same Ø49.2 crest, same 3 mm pitch, same 11 mm of neck, same nut. So is the
-collar: `collar_over` goes up by the same 0.5 mm, which keeps the collar at Ø52 and the ring
-it hangs on at 1 mm, exactly as on the Ø50.
+`panel_spigot_od495_l45_c54` is the same part with the tube turned down half a millimetre,
+for when something has to slide over it or into it and Ø50 on Ø50 is no fit at all. **The
+screw is untouched** — same Ø49.2 crest, same 3 mm pitch, same 11 mm of neck, same nut. So is
+the collar: `collar_over` goes up by the same 0.5 mm, which keeps the collar at Ø54 and the
+ring it hangs on at 2 mm, exactly as on the Ø50.
 
 One thing does change in kind. At Ø50 the tube *cannot* pass the Ø50 hole and that was half
 the mechanism; at Ø49.5 it can, and only the collar stops it. Nothing hangs differently —
 the collar was always what the part bears on — but it is no longer impossible to push the
 part through a panel with no nut on it.
 
-`collar_blend` goes up to 1.25 with `collar_over`, and that matters: the chamfer is what
-reaches down to the tube, so leaving it at 1 would leave a 0.25 mm **flat** ring under the
+`collar_blend` goes up to 2.25 with `collar_over`, and that matters: the chamfer is what
+reaches down to the tube, so leaving it at 2 would leave a 0.25 mm **flat** ring under the
 collar, which is a 0° overhang once the part is turned over. The ledge is echoed on every
-render now, because raising `collar_over` widens it without widening the chamfer.
-`panel_spigot_wide` leaves 1 mm of it on purpose — a short flat ring bridges off the tube's
-wall and carries itself, which is the documented `collar_blend = 0` case.
+render, because raising `collar_over` widens it without widening the chamfer. The extra
+quarter millimetre over the same 3 mm of height makes the shoulder 36.9° rather than 33.7° —
+the steepest of the presets, and still under the 40° the model asserts.
+
+### Longer tube, wider collar
+
+The second print worked, and then it was used: the tube was too short, and a 1 mm ring was
+too little to push against. So the defaults moved:
+
+| | Second print | Now |
+|---|---:|---:|
+| Tube (`tube_len`) | 25 mm | **45 mm** |
+| Collar Ø / ring on the panel (`collar_over`) | Ø52 / 1 mm | **Ø54 / 2 mm** |
+| Collar thickness (`collar_t`) | 3 mm | **4 mm** |
+| Collar shoulder, outside (`collar_blend`) | 1 mm over 2 mm, 26.6° | **2 mm over 3 mm, 33.7°** |
+| Root cone, inside (`root_cone`) | 6 mm, 22.6° | **7 mm, 19.7°** |
+| Overall, thread tip to tube mouth | 39 mm | **60 mm** |
+
+The collar is thicker because of the wider ring, not for its own sake. The chamfer has to
+reach all the way from the collar's rim to the tube or it leaves a flat ledge (see above), and
+doubling the ring doubles the distance it has to cover. Over the 2 mm of height a 3 mm collar
+can give it, that is 45° again — the angle the first print failed at. One more millimetre of
+collar gives it 3 mm, which is 33.7°: steeper than before, well under the 40° the model
+asserts, and a stiffer collar to pull the panel against. `root_cone` grows by the same
+millimetre, so the cone still climbs 3 mm into the tube past the collar; a 45 mm tube is a
+longer lever on its root, and that fillet is what takes it.
+
+The price of 45 mm is paid at the printer: the free-standing shell is that much taller before
+it reaches the collar. Brim it, and slow down for the last few millimetres before the collar.
 
 ### Two nuts, and why you might want the narrow one
 
@@ -594,22 +620,31 @@ one print serves them all, whichever grip you choose.
 
 ### Presets
 
-Named parameter sets live in [`panel_spigot.json`](panel_spigot.json):
+Named parameter sets live in [`panel_spigot.json`](panel_spigot.json). The spigots carry
+their dimensions in the name, so the STLs can be told apart in a slicer's file dialog: **`od`**
+is the tube's outside Ø, **`l`** the tube's length and **`c`** the collar's Ø, all in mm
+(`od495` is Ø49.5). Each of those presets sets the three values itself rather than leaning on
+the defaults, so the name stays true if the defaults move again.
 
 | Preset | What it builds |
 |---|---|
-| `panel_spigot` | **the default: Ø50 × 1.5 mm wall, 25 mm of tube** |
-| `panel_spigot_print` | the same, laid out for the bed |
-| `panel_spigot_50`, `panel_spigot_50_print` | 50 mm of tube instead of 25 |
-| `panel_spigot_thin` | a 1 mm wall — a duct, not something to lean on |
-| `panel_spigot_wide` | `collar_over` 4, so the ring it hangs on is 2 mm |
+| `panel_spigot_od50_l45_c54` | **the default: Ø50 × 2 mm wall, 45 mm of tube, Ø54 collar** |
+| `panel_spigot_od50_l45_c54_print` | the same, laid out for the bed |
+| `panel_spigot_od50_l50_c54`, `…_print` | 50 mm of tube |
+| `panel_spigot_od495_l45_c54`, `…_print` | the tube turned down to Ø49.5, on the same screw and collar |
+| `panel_spigot_od50_l45_c54_thin` | a 1 mm wall — a duct, not something to lean on |
+| `panel_spigot_od50_l45_c54_stout`, `…_print` | a 2.5 mm wall |
 | `panel_spigot_nut`, `panel_spigot_nut_wide` | the fin-grip nut, and the flanged one |
 | `panel_spigot_nut_slim` | the scalloped grip — Ø57.2 instead of Ø74.4 across |
 | `panel_spigot_nut_slim_tight` | the same, narrower still at Ø54.4, on a thinner wall |
-| `panel_spigot_hole60`, `panel_spigot_nut_hole60` | a Ø60 hole, with the tube grown to match |
+| `panel_spigot_od60_l45_c64_hole60`, `panel_spigot_nut_hole60` | a Ø60 hole, with the tube grown to match |
+
+The old names — `panel_spigot`, `panel_spigot_print`, `panel_spigot_50`, `panel_spigot_wide`
+and friends — are gone; `_wide`'s 2 mm ring is now the default.
 
 ```sh
-openscad -o panel_spigot.stl -p panel_spigot.json -P panel_spigot panel_spigot.scad
+openscad -o panel_spigot_od50_l45_c54_print.stl -p panel_spigot.json \
+    -P panel_spigot_od50_l45_c54_print panel_spigot.scad
 ```
 
 ## Requirements
